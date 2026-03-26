@@ -6,7 +6,6 @@
     <title>DocBox Pro</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* Estilo rápido para o seletor de cores no painel admin */
@@ -242,13 +241,6 @@
 
 <div id="toast">Copiado!</div>
 
-<script>
-  // Se estiver no seu PC, carrega o arquivo com as chaves
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    document.write('<script src="config.js"><\/script>');
-  }
-</script>
-
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
