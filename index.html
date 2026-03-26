@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocBox Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Estilo rápido para o seletor de cores no painel admin */
+        #script-color option {
+            font-weight: bold;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen" class="flex-center" style="background: var(--bg); position: fixed; inset: 0; z-index: 9999;">
+    <div style="color: var(--accent); font-weight: 600;">Carregando...</div>
+</div>
+
+    <section id="auth-screen" class="screen">
+    <div class="login-wrapper">
+    
+        <div class="login-illustration">
+    <div class="welcome-text">
+        <h2 class="main-title">Gerencie seus atendimentos de forma profissional</h2>
+    </div>
+    <img src="404-error-lost-in-space-animate.svg" alt="Ilustração">
+</div>
+
+        <div class="auth-card">
+            <h1>DocBox Pro</h1>
+            
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Seu e-mail">
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Sua senha">
+            </div>
+
+            <button onclick="handleLogin()" class="btn-primary">Entrar no Sistema</button>
+            
+            <div class="auth-footer-links">
+                <button onclick="solicitarRecuperacao()" class="btn-link">Esqueci minha senha</button>
+                <button onclick="handleSignUp()" class="btn-link">Criar uma nova conta</button>
+            </div>
+
+            <p class="dev-credits">Developed by Casemiro Alves</p>
+        </div> </div> </section>
+
+    <section id="main-screen" class="screen hidden">
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar collapsed" id="sidebar">
+        <button class="btn-close-sidebar" onclick="toggleSidebar()">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="logo-area">
+            <i data-lucide="terminal"></i>
+            <span>DocBox</span>
+        </div>
+            <nav>
+    <div class="nav-section">
+        <span class="nav-section-title">Navegação</span>
+        <button onclick="showScreen('main-screen')" class="nav-item active">
+            <i data-lucide="layout-grid"></i> <span>Home</span>
+        </button>
+        <button onclick="showScreen('admin-screen')" class="nav-item">
+            <i data-lucide="plus-circle"></i> <span>Gerenciar Scripts</span>
+        </button>
+    </div>
+
+    <div class="nav-section">
+    <span class="nav-section-title">Recursos</span>
+    
+    <a href="https://chromewebstore.google.com/detail/lkhkepkcophddeaojhccllemjjobfdak?utm_source=item-share-cb" 
+       target="_blank" class="nav-item">
+        <i class="icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chrome"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" x2="12" y1="8" y2="8"/><line x1="3.95" x2="8.54" y1="6.06" y2="14"/><line x1="10.88" x2="15.46" y1="21.94" y2="14"/></svg>
+        </i> 
+        <span>Extensão Chrome</span>
+    </a>
+
+    <a href="https://casemiro-dev.github.io/Painel-de-Scripts/" 
+       target="_blank" class="nav-item">
+        <i data-lucide="table-2"></i> <span>Planilha de Atalhos</span>
+    </a>
+</div>
+</nav>
+            <div class="user-footer">
+                <div class="u-info">
+                    <span id="user-display">---</span>
+                </div>
+                <button onclick="handleLogout()" class="btn-logout-icon" title="Sair">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+    <header class="topbar">
+        <div class="topbar-left">
+            <button onclick="toggleSidebar()" class="btn-icon">
+                <i data-lucide="menu"></i>
+            </button>
+            <h2 class="page-title">Home</h2>
+        </div>
+        <div class="topbar-right">
+            <button id="toggle-scripts-btn" onclick="toggleScripts()" class="btn-icon" title="Alternar Visualização">
+                <i data-lucide="layout-grid"></i>
+            </button>
+
+            <button onclick="abrirNovaAba()" class="btn-icon" title="Abrir em nova aba">
+                <i data-lucide="external-link"></i>
+            </button>    
+
+            <button onclick="toggleTheme()" class="btn-icon" id="theme-btn">
+                <i data-lucide="sun"></i>
+            </button>
+        </div>
+    </header>
+
+            <div class="workspace-layout">
+                <div class="atendimento-column">
+                    <div class="form-card">
+                        <h3>Registro de Atendimento</h3>
+
+                        <div class="input-row">
+                            <input type="text" id="at-nome" placeholder="Nome do Cliente" style="flex: 1.5;">
+                            <input type="text" id="at-protocolo" placeholder="Protocolo" style="flex: 1;">
+                        </div>
+
+                        <div class="input-row">
+                            <div class="input-container-relative">
+                                <input type="text" id="at-doc" class="input-with-icons" placeholder="CPF/CNPJ" maxlength="18">
+                                <div class="input-icon-group">
+                                    <button type="button" class="btn-doc-icon" title="Limpar Pontuação" onclick="processarDoc(false)">
+                                        <i data-lucide="hash"></i>
+                                    </button>
+                                    <button type="button" class="btn-doc-icon" title="Pontuar Documento" onclick="processarDoc(true)">
+                                        <i data-lucide="binary"></i>
+                                    </button>
+                                </div>
+                                <div id="doc-status"></div>
+                            </div>
+
+                            <div style="flex: 1;">
+                                <input type="text" id="at-tel" placeholder="Telefone">
+                            </div>
+                        </div>
+
+                        <textarea id="at-relato" placeholder="Relato do atendimento..."></textarea>
+                        
+                        <div class="button-grid-atendimento">
+                            <button class="btn-secondary" onclick="transferirAtendimento()">Transferir Matrix</button>
+                            <button class="btn-secondary" onclick="copiarRegistro()">Copiar</button>
+                            <button class="btn-primary" onclick="saveAtendimento()">Salvar Atendimento</button>
+                            <button class="btn-danger" onclick="limparCampos()">Apagar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scripts-column">
+                    <div id="grid-display" class="compact-grid">
+                        </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <section id="admin-screen" class="screen hidden">
+        <div class="admin-container">
+            <header class="admin-header">
+                <button onclick="showScreen('main-screen')" class="btn-back">
+                    <i data-lucide="chevron-left"></i> Voltar
+                </button>
+                <h2>Configurações</h2>
+            </header>
+            
+            <div class="admin-grid">
+    <div class="form-card">
+        <h3>Novo Script</h3>
+        <input type="hidden" id="edit-script-id" value="">
+        <input type="text" id="script-title" placeholder="Título (Opcional)">
+        <input type="text" id="script-function" placeholder="Categoria (Ex: Suporte)">
+        <textarea id="script-content" rows="6" placeholder="Texto para copiar..."></textarea>
+        
+        <div class="color-row" style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Cor do Card:</label>
+            <select id="script-color" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text-bold);">
+                <option value="#ff0000" style="background: #ff0000; color: white;">Vermelho</option>
+                <option value="#ff7f00" style="background: #ff7f00;">Laranja</option>
+                <option value="#ffff00" style="background: #ffff00; color: black;">Amarelo</option>
+                <option value="#00ff00" style="background: #00ff00; color: black;">Verde</option>
+                <option value="#0000ff" style="background: #0000ff; color: white;">Azul</option>
+                <option value="#4b0082" style="background: #4b0082; color: white;">Anil</option>
+                <option value="#9400d3" style="background: #9400d3; color: white;">Violeta</option>
+                <option value="#000000" style="background: #000000; color: white;">Preto</option>
+                <option value="#808080" style="background: #808080; color: white;">Cinza</option>
+                <option value="#ffffff" style="background: #ffffff; color: black;">Branco</option>
+            </select>
+        </div>
+        
+        <button onclick="saveScript()" class="btn-primary">Registrar Atalho</button>
+    </div>
+
+    <div class="manage-area">
+        <div class="form-card" style="margin-bottom: 30px;">
+            <h3>Papel de Parede</h3>
+            <p class="subtitle" style="margin-bottom: 15px;">Cole a URL de uma imagem ou GIF (Giphy, Pinterest, etc)</p>
+            <input type="text" id="bg-url" placeholder="https://exemplo.com/imagem.gif">
+            <div class="button-grid-atendimento" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-primary" onclick="aplicarWallpaper()">Aplicar</button>
+                <button class="btn-danger" onclick="removerWallpaper()">Remover</button>
+            </div>
+        </div>
+
+        <h3>Lista de Exclusão</h3>
+        <div id="admin-list" class="admin-list"></div>
+    </div>
+</div>
+</div>
+</section>
+
+<section id="reset-password-screen" class="screen hidden flex-center">
+    <div class="auth-card">
+        <h1>Nova Senha</h1>
+        <p class="subtitle">Digite sua nova senha abaixo para recuperar o acesso</p>
+        <div class="input-group">
+            <input type="password" id="new-password" placeholder="Nova senha">
+        </div>
+        <button onclick="atualizarSenha()" class="btn-primary">Atualizar Senha</button>
+        <button onclick="showScreen('auth-screen')" class="btn-link" style="margin-top: 10px;">Voltar ao Login</button>
+    </div>
+</section>
+
+<div id="toast">Copiado!</div>
+
+<script>
+  // Se estiver no seu PC, carrega o arquivo com as chaves
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    document.write('<script src="config.js"><\/script>');
+  }
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>

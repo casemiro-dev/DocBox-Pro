@@ -1,0 +1,767 @@
+/* ==========================================================================
+   VARIÁVEIS DE TEMA (DARK / LIGHT)
+   ========================================================================== */
+:root {
+    --bg: #0d1117;
+    --sidebar: #161b22;
+    --card: #1c2128;
+    --border: #30363d;
+    --text: #8b949e;
+    --text-bold: #c9d1d9;
+    --accent: #388bfd;
+    --success: #238636;
+    --login-gradient: radial-gradient(circle at top right, #161b22, #0d1117);
+}
+
+.light-mode {
+    --bg: #f6f8fa;
+    --sidebar: #ffffff;
+    --card: #ffffff;
+    --border: #d0d7de;
+    --text: #57606a;
+    --text-bold: #24292f;
+    --accent: #0969da;
+    --success: #1a7f37;
+    --login-gradient: radial-gradient(circle at top right, #ffffff, #f6f8fa);
+}
+
+/* ==========================================================================
+   RESET E CONFIGURAÇÕES GERAIS
+   ========================================================================== */
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    font-family: 'Inter', sans-serif; 
+}
+
+body { 
+    background-color: var(--bg); 
+    background-image: var(--custom-bg, none);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    color: var(--text); 
+    min-height: 100vh; 
+    overflow-y: auto; 
+    transition: background 0.3s, color 0.3s; 
+}
+
+.hidden { display: none !important; }
+.flex-center { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+/* ==========================================================================
+   LAYOUT DE LOGIN - VERSÃO FINAL AJUSTADA (PROPORCIONAL)
+   ========================================================================== */
+
+#auth-screen { 
+    background: var(--login-gradient); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px;
+}
+
+.login-wrapper {
+    display: flex;
+    flex-direction: row; 
+    align-items: center; /* Alinha verticalmente o astronauta com a card */
+    justify-content: center;
+    gap: 40px;           /* Reduzi o espaço para não parecer "solto" */
+    width: 100%;
+    max-width: 1300px;
+}
+
+/* Lado Esquerdo: Texto e Imagem */
+.login-illustration {
+    flex: 1.5;           /* Dá mais peso visual para este lado */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; 
+    justify-content: center;
+}
+
+.welcome-text {
+    margin-bottom: 0px; /* Título mais próximo da imagem */
+    text-align: left;
+}
+
+.main-title {
+    color: var(--accent);
+    font-size: 35px;      /* Menor e mais elegante */
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.login-illustration img {
+    width: 100%;
+    max-width: 900px;     /* Aumentei para o astronauta ter presença */
+    height: auto;
+    filter: drop-shadow(0 0 30px rgba(56, 139, 253, 0.1));
+}
+
+/* --- CAIXA DE LOGIN (DOCBOX PRO) - AJUSTADA --- */
+
+.auth-card {
+    background: var(--card) !important;
+    border: 1px solid var(--border);
+    padding: 45px 35px;   /* Reduzi um pouco o respiro interno */
+    border-radius: 24px;
+    width: 100%; 
+    max-width: 440px;     /* Tamanho equilibrado (estava 500px) */
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); 
+    display: flex; 
+    flex-direction: column; 
+    backdrop-filter: blur(15px);
+    position: relative;
+    z-index: 20;
+}
+
+/* Título DocBox Pro */
+.auth-card h1 { 
+    color: var(--text-bold); 
+    margin-bottom: 25px; 
+    font-size: 28px;      /* Reduzi de 36px para 28px */
+    font-weight: 800;
+    text-align: center;
+}
+
+/* Inputs e Botão */
+.auth-card input {
+    width: 100%;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+}
+
+/* Links sem o fundo branco */
+.auth-footer-links {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.auth-card .btn-link { 
+    background: transparent !important;
+    border: none !important;
+    color: var(--text) !important; 
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.auth-card .btn-link:hover { color: var(--accent) !important; }
+
+/* ==========================================================================
+   RESPONSIVIDADE (MOBILE) - RECUPERADA
+   ========================================================================== */
+
+@media (max-width: 950px) {
+    .login-wrapper {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    /* FORÇA O TÍTULO A SUMIR NO MOBILE */
+    .welcome-text, .main-title { 
+        display: none !important; 
+    }
+
+    .login-illustration {
+        align-items: center;
+        max-width: 100%;
+        padding-left: 0;
+    }
+
+    .login-illustration img { 
+        max-width: 350px; /* Astronauta em tamanho bom no mobile */
+        align-self: center;
+    }
+    
+    .auth-card {
+        max-width: 90%; /* Card ocupa quase tudo no mobile */
+        padding: 30px 20px;
+    }
+}
+
+/* ==========================================================================
+   BOTÕES GLOBAIS
+   ========================================================================== */
+.btn-primary {
+    width: 100%; padding: 14px; background: var(--accent); color: white;
+    border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.btn-primary:hover { transform: scale(1.02); filter: brightness(1.1); box-shadow: 0 0 15px rgba(56, 139, 253, 0.3); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-secondary {
+    padding: 12px; background: var(--border); color: var(--text-bold);
+    border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600;
+    transition: 0.2s;
+}
+.btn-secondary:hover { background: var(--card); border-color: var(--accent); }
+
+.btn-danger {
+    padding: 12px; 
+    background-color: #442a2a !important; 
+    color: #ff7b72 !important;
+    border: 1px solid #6e3636 !important; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-weight: 600;
+    transition: 0.2s;
+}
+.btn-danger:hover { background-color: #6e3636 !important; color: #fff !important; }
+
+/* ==========================================================================
+   SIDEBAR (NAVEGAÇÃO)
+   ========================================================================== */
+#main-screen { display: flex; min-height: 100vh; width: 100vw; }
+
+.sidebar { 
+    width: 260px; 
+    background: var(--sidebar); 
+    border-right: 1px solid var(--border); 
+    display: flex; 
+    flex-direction: column; 
+    transition: 0.3s ease; 
+    flex-shrink: 0;
+    backdrop-filter: blur(5px);
+    background-color: var(--sidebar) !important;
+    opacity: 0.98;
+}
+
+.sidebar.collapsed { margin-left: -260px; }
+
+.logo-area { padding: 30px; display: flex; align-items: center; gap: 12px; font-weight: 800; color: var(--accent); font-size: 20px; }
+
+nav { 
+    flex: 1; 
+    padding: 15px 20px; /* O 20px dá o espaçamento lateral que você quer */
+}
+
+.nav-section-title {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text);
+    margin: 20px 15px 10px 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: 0.6;
+}
+
+.nav-item {
+    width: 100%; 
+    padding: 12px 15px;
+    margin-bottom: 4px;
+    border-radius: 8px; 
+    gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.nav-item i { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+
+.nav-item:hover, .nav-item.active {
+    background: var(--border) !important;
+    color: var(--text-bold);
+}
+
+.user-footer { 
+    padding: 20px; 
+    border-top: 1px solid var(--border); 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    width: 260px; 
+}
+
+#user-display { 
+    font-size: 12px; 
+    font-weight: 600; 
+    max-width: 160px; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    color: var(--text-bold); 
+}
+
+/* ==========================================================================
+   WORKSPACE E LAYOUT CENTRAL
+   ========================================================================== */
+.workspace-layout {
+    display: flex;
+    gap: 40px;
+    padding: 30px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: calc(100vh - 65px);
+}
+
+.atendimento-column { 
+    width: 650px; 
+    flex-shrink: 0; 
+}
+
+.scripts-column { 
+    flex: 1; 
+}
+
+.form-card { 
+    background: var(--card) !important; 
+    border: 1px solid var(--border); 
+    padding: 25px; 
+    border-radius: 12px; 
+    backdrop-filter: blur(5px);
+    opacity: 0.98;
+}
+
+.form-card h3 { margin-bottom: 20px; color: var(--text-bold); }
+
+/* CORREÇÃO DAS LARGURAS */
+.input-row { 
+    display: flex; 
+    gap: 10px; 
+    width: 100%; 
+    align-items: flex-start;
+}
+
+.input-row > input, 
+.input-row > div,
+.input-row > .input-container-relative { 
+    flex: 1 1 0% !important; 
+    width: 0; 
+    min-width: 0;
+}
+
+.input-container-relative input {
+    width: 100% !important;
+}
+
+.button-grid-atendimento {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* ==========================================================================
+   FORMULÁRIOS, INPUTS E TEXTAREA
+   ========================================================================== */
+input, textarea, select { 
+    width: 100%; 
+    padding: 12px; 
+    margin-bottom: 12px; 
+    background: var(--bg); 
+    border: 1px solid var(--border); 
+    border-radius: 8px; 
+    color: var(--text-bold); 
+    font-size: 14px; 
+    transition: background 0.3s, border-color 0.2s;
+}
+
+textarea#at-relato {
+    resize: vertical; 
+    min-height: 250px;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--card);
+}
+
+/* Container de ícones dentro do input (CPF/CNPJ) */
+.input-container-relative { position: relative; flex: 1; }
+.input-with-icons { padding-right: 75px !important; }
+
+.input-icon-group {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 5px;
+    z-index: 5;
+    margin-top: -6px;
+}
+
+.btn-doc-icon {
+    background: var(--border) !important;
+    border: 1px solid var(--border);
+    color: var(--text-bold);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-doc-icon:hover { background: var(--accent) !important; color: white; }
+
+.input-valid { border-color: var(--success) !important; }
+.input-invalid { border-color: #f85149 !important; }
+
+/* ==========================================================================
+   TOPBAR
+   ========================================================================== */
+.main-content { flex: 1; display: flex; flex-direction: column; }
+
+.topbar { 
+    height: 65px; 
+    padding: 0 40px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    background: var(--sidebar) !important; 
+    border-bottom: 1px solid var(--border); 
+    flex-shrink: 0;
+    backdrop-filter: blur(5px);
+    opacity: 0.98;
+}
+
+.topbar-left, .topbar-right { display: flex; align-items: center; gap: 15px; }
+.page-title { font-size: 18px; color: var(--text-bold); }
+
+.btn-icon, .btn-logout-icon, .btn-back {
+    background: transparent !important; 
+    border: none !important; 
+    color: var(--text); 
+    cursor: pointer; 
+    padding: 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+}
+.btn-icon:hover { color: var(--text-bold); }
+
+/* ==========================================================================
+   GRID DE SCRIPTS (CARDS)
+   ========================================================================== */
+.compact-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    gap: 15px; 
+}
+
+.script-card {
+    background: var(--card) !important; 
+    border: 1px solid var(--border); 
+    border-left: 5px solid;
+    padding: 15px; 
+    border-radius: 10px; 
+    cursor: pointer; 
+    height: 115px;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between; 
+    transition: 0.2s ease-out;
+    overflow: hidden; 
+}
+
+.script-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+.script-card h3 { 
+    font-size: 14px; 
+    color: var(--text-bold); 
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.script-card p { 
+    font-size: 12px; 
+    line-height: 1.4; 
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   ADMINISTRAÇÃO
+   ========================================================================== */
+.admin-container { padding: 30px; max-width: 1100px; margin: 0 auto; overflow-y: auto; min-height: 100vh; }
+.admin-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.admin-grid .form-card { align-self: start; }
+
+#script-content {
+    resize: vertical;
+    min-height: 120px;
+    max-height: 500px;
+    width: 100%;
+}
+
+select#script-color option { font-weight: bold; color: #fff; }
+
+/* ==========================================================================
+   UTILITÁRIOS (SCROLL, TOAST, LOADING)
+   ========================================================================== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+#toast { 
+    visibility: hidden; 
+    position: fixed; 
+    bottom: 30px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    background: var(--success); 
+    color: white; 
+    padding: 12px 24px; 
+    border-radius: 50px; 
+    font-weight: 600; 
+    opacity: 0; 
+    transition: 0.3s; 
+    z-index: 9999; 
+}
+
+/* Spinner de Carregamento Corrigido */
+#loading-screen div {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    text-indent: -9999px; 
+    overflow: hidden;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE (MOBILE)
+   ========================================================================== */
+@media (max-width: 1100px) {
+    .workspace-layout { flex-direction: column; height: auto; padding: 15px; }
+    .atendimento-column, .scripts-column { width: 100%; max-width: 100%; }
+    .scripts-column { margin-top: 20px; padding-bottom: 40px; }
+    .compact-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+}
+
+/* Estilos para o Overlay (Fundo escuro) */
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 998;
+}
+
+@media (max-width: 900px) {
+    #auth-screen { 
+        flex-direction: column; /* No mobile, um fica em cima do outro */
+        gap: 20px;
+    }
+    .login-illustration {
+        max-width: 250px;
+    }
+}
+
+@media (max-width: 600px) {
+    .sidebar { 
+        position: fixed; 
+        z-index: 1000; 
+        height: 100vh;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+    }
+
+    .btn-close-sidebar {
+        display: block !important;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: transparent;
+        border: none;
+        color: var(--text-bold);
+        cursor: pointer;
+    }
+
+    .sidebar:not(.collapsed) ~ #sidebar-overlay {
+        display: block;
+    }
+
+    .input-row { flex-direction: column; gap: 0; }
+    .input-row > * { width: 100% !important; flex: none !important; }
+    
+    .button-grid-atendimento { grid-template-columns: 1fr; }
+    .topbar { padding: 0 10px; }
+}
+
+/* ==========================================================================
+   COMPONENTES DE NAVEGAÇÃO (BOTÃO X E OVERLAY)
+   ========================================================================== */
+.btn-close-sidebar {
+    display: block; 
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    color: var(--text-bold);
+    cursor: pointer;
+    z-index: 10;
+    transition: opacity 0.2s;
+}
+
+.btn-close-sidebar:hover {
+    opacity: 0.6;
+}
+
+/* ==========================================================================
+--- LÓGICA DE OCULTAR SCRIPTS E CENTRALIZAR --- 
+==========================================================================*/
+
+.main-content.scripts-hidden .scripts-column,
+.main-content.scripts-hidden #grid-display {
+    display: none !important;
+}
+
+.main-content.scripts-hidden .workspace-layout {
+    display: block !important;
+}
+
+.main-content.scripts-hidden .atendimento-column {
+    max-width: 800px;
+    margin: 40px auto !important;
+    width: 100%;
+}
+
+/* Créditos discretos no rodapé da card */
+.dev-credits {
+    margin-top: 25px;
+    font-size: 10px;
+    color: var(--text);
+    opacity: 0.4; 
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    pointer-events: none; 
+}
+
+/*========================================================================
+--- ORGANIZAÇÃO DO LOGIN (LADO A LADO) --- 
+==========================================================================*/
+
+.login-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 100px;
+    width: 100%;
+    max-width: 1300px;
+    z-index: 10;
+}
+
+/* Juntei as duas declarações aqui para ficar organizado */
+.login-illustration {
+    flex: 1.5; 
+    display: flex;
+    flex-direction: column; /* Faz a frase ficar ABAIXO da imagem */
+    align-items: center;     /* Centraliza a imagem e a frase horizontalmente */
+    justify-content: center;
+    max-width: 700px;
+    text-align: center;
+}
+
+.login-illustration img {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 30px rgba(56, 139, 253, 0.2));
+}
+
+#auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#auth-screen::before {
+    display: none !important;
+}
+
+/*==========================================================================
+ --- ESTILO DA FRASE FORA DA CARD --- 
+ ==========================================================================*/
+
+.illustration-subtitle {
+    margin-top: 20px;
+    font-size: 18px;
+    color: var(--text-bold);
+    font-weight: 500;
+    max-width: 80%;
+    line-height: 1.4;
+    opacity: 0.8;
+}
+
+/* Responsividade (Mobile) */
+@media (max-width: 900px) {
+    .login-wrapper {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    .login-illustration {
+        max-width: 250px; /* Aumentei um pouquinho o limite no mobile pra não sumir */
+    }
+    .illustration-subtitle {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+}
+
+/* --- AJUSTE EXCLUSIVO PARA O BOTÃO DE LOGIN --- */
+
+/* Isso afeta APENAS o botão que está dentro da card de login */
+.auth-card .btn-primary {
+    padding: 14px !important;    /* Altura maior só aqui */
+    font-size: 14px !important;   /* Texto maior só aqui */
+    font-weight: 700;
+    width: 100%;
+}
+
+/* --- VOLTANDO OS OUTROS BOTÕES AO NORMAL --- */
+
+/* Isso garante que os botões de Salvar, Registrar e Aplicar continuem compactos */
+.btn-primary {
+    padding: 10px 20px; 
+    font-size: 14px;
+    font-weight: 500;
+}
