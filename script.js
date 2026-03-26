@@ -1,15 +1,17 @@
-// --- CONFIGURAÇÃO SEGURA (Local + Vercel) ---
-// Tenta pegar do config.js (local) ou das variáveis de ambiente (Vercel)
-const supabaseUrl = (typeof CONFIG !== 'undefined' ? CONFIG.URL : '') || '';
-const supabaseKey = (typeof CONFIG !== 'undefined' ? CONFIG.KEY : '') || '';
+import { createClient } from '@supabase/supabase-js'
 
-// Inicializa o cliente
-const supabaseClient = (supabaseUrl && supabaseKey) 
-    ? supabase.createClient(supabaseUrl, supabaseKey) 
-    : null;
+const supabaseUrl = import.meta.env.VITE_URL;
+const supabaseKey = import.meta.env.VITE_KEY;
 
+if (!supabaseUrl || !supabaseKey) {
+    console.error("ERRO: Chaves do Supabase não encontradas. Verifique o arquivo .env ou a Vercel.");
+}
+
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+// --- RESTO DO SEU CÓDIGO (VARIÁVEIS GLOBAIS) ---
 let currentUser = null;
-let allScripts = []; // Variável global para armazenar os scripts carregados
+let allScripts = [];
 let carregandoRecuperacao = false;
 
 // --- LÓGICA DE ABAS (MANTIDA) ---
@@ -762,3 +764,30 @@ function toggleScripts() {
     
     lucide.createIcons();
 }
+
+// EXPOSIÇÃO GLOBAL COMPLETA
+window.handleLogin = handleLogin;
+window.handleSignUp = handleSignUp;
+window.handleLogout = handleLogout;
+window.toggleSidebar = toggleSidebar;
+window.showScreen = showScreen;
+window.toggleTheme = toggleTheme;
+window.toggleScripts = toggleScripts;
+window.abrirNovaAba = abrirNovaAba;
+
+// Funções de Atendimento e Scripts
+window.processarDoc = processarDoc;
+window.transferirAtendimento = transferirAtendimento;
+window.copiarRegistro = copiarRegistro;
+window.saveAtendimento = saveAtendimento;
+window.limparCampos = limparCampos;
+window.copyToClipboard = copyToClipboard; 
+
+// Funções do Painel Admin
+window.saveScript = saveScript;
+window.editarScript = editarScript;
+window.deleteScript = deleteScript;
+window.aplicarWallpaper = aplicarWallpaper;
+window.removerWallpaper = removerWallpaper;
+window.solicitarRecuperacao = solicitarRecuperacao;
+window.atualizarSenha = atualizarSenha;
