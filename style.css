@@ -511,21 +511,84 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ==========================================================================
-   ADMINISTRAÇÃO
-   ========================================================================== */
-.admin-container { padding: 30px; max-width: 1100px; margin: 0 auto; overflow-y: auto; min-height: 100vh; }
-.admin-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
-.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-.admin-grid .form-card { align-self: start; }
+   ADMINISTRAÇÃO (COM RESPONSIVIDADE)
+   ========================================================================== */
+/* Container principal */
+.admin-container { 
+    padding: 30px; 
+    max-width: 1200px; /* Aumentei um pouco para garantir espaço */
+    margin: 0 auto; 
+    min-height: 100vh; 
+}
 
-#script-content {
-    resize: vertical;
-    min-height: 120px;
-    max-height: 500px;
+/* Forçando o Grid Lado a Lado no Desktop */
+.admin-grid { 
+    display: grid !important; 
+    grid-template-columns: 1fr 1fr !important; /* Força 50% para cada lado */
+    gap: 30px; 
+    align-items: start;
     width: 100%;
 }
 
-select#script-color option { font-weight: bold; color: #fff; }
+/* Ajuste das cards para não encolherem demais */
+.admin-grid .form-card, 
+.admin-grid .manage-area {
+    min-width: 0; /* Evita que o conteúdo interno empurre a largura */
+}
+
+/* --- ESTA PARTE SÓ FUNCIONA EM TELAS PEQUENAS --- */
+@media screen and (max-width: 950px) {
+    .admin-grid {
+        grid-template-columns: 1fr !important; /* Aqui ele vira um embaixo do outro */
+        gap: 20px;
+    }
+
+    /* Empilha os botões internos no mobile */
+    .admin-btns-group {
+        flex-direction: column !important;
+    }
+
+    .admin-btns-group button {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+}
+
+/* Ajuste de espaçamento do topo no Painel Admin */
+#admin-screen h2 {
+    margin-top: 20px !important;    /* Empurra o nome 'Configurações' para baixo do topo */
+    margin-bottom: 15px !important; /* Cria distância entre o nome e as caixas cinzas */
+    display: block;
+}
+
+#admin-screen .btn-back {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+/* ==========================================================================
+   AJUSTES PARA TELAS PEQUENAS (MOBILE)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .admin-grid {
+        grid-template-columns: 1fr; /* Força uma coluna só */
+        gap: 20px;
+    }
+
+    /* Garante que os botões dentro do admin também empilhem no mobile */
+    .admin-btns-group, 
+    .admin-grid .button-grid-atendimento {
+        flex-direction: column !important;
+        display: flex !important;
+        grid-template-columns: 1fr !important; /* Caso use grid */
+    }
+
+    .admin-btns-group button,
+    .admin-grid .button-grid-atendimento button {
+        width: 100% !important;
+        flex: none !important;
+    }
+}
 
 /* ==========================================================================
    UTILITÁRIOS (SCROLL, TOAST, LOADING)
@@ -623,6 +686,18 @@ select#script-color option { font-weight: bold; color: #fff; }
     
     .button-grid-atendimento { grid-template-columns: 1fr; }
     .topbar { padding: 0 10px; }
+}
+
+/* Ajuste específico para os botões do Admin no Mobile */
+@media (max-width: 600px) {
+    .admin-btns-group {
+        flex-direction: column !important; /* Empilha um embaixo do outro */
+    }
+
+    .admin-btns-group button {
+        width: 100% !important;
+        flex: none !important; /* Desativa a divisão de 50% */
+    }
 }
 
 /* ==========================================================================
