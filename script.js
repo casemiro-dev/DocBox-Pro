@@ -76,18 +76,39 @@ function showScreen(screenId) {
 async function handleLogin() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const btn = document.querySelector('.btn-primary'); // Pega o botão de login no HTML
+
     if(!email || !password) return alert("Preencha os campos!");
+
+    // --- MUDANÇA: FEEDBACK DE LOADING ---
+    if(btn) {
+        btn.disabled = true; // Trava o botão para evitar múltiplos cliques
+        btn.innerText = 'Autenticando...'; // Muda o texto
+    }
     
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) alert("Erro: " + error.message);
-    else checkUser();
+    
+    if (error) {
+        alert("Erro: " + error.message);
+        // VOLTA O BOTÃO AO NORMAL SE DER ERRO
+        if(btn) {
+            btn.disabled = false;
+            btn.innerText = 'Entrar no Sistema';
+        }
+    } else {
+        checkUser();
+    }
 }
 
+// --- MUDANÇA: GARANTE QUE O ENTER CHAME O FEEDBACK ---
 if (document.getElementById('password')) {
     document.getElementById('password').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleLogin();
+        if (e.key === 'Enter') {
+            handleLogin(); // Chama a função que já tem o loading
+        }
     });
 }
+// ---------------------------------------------------
 
 async function handleSignUp() {
     const email = document.getElementById('email').value;
@@ -104,13 +125,21 @@ async function handleLogout() {
     window.location.href = window.location.origin + window.location.pathname; // Recarrega na home limpa
 }
 
+// --- MUDANÇA: LOGIN E SCRIPTS EM PARALELO (MAIS RÁPIDO) ---
 async function checkUser() {
     const loading = document.getElementById('loading-screen');
     
     if (carregandoRecuperacao) return;
 
     try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
+        // --- MUDANÇA: Promise.all dispara as duas coisas ao mesmo tempo ---
+        const [authResponse, scriptsResponse] = await Promise.all([
+            supabaseClient.auth.getUser(), // Verifica quem é o usuário
+            loadScripts() // Já começa a baixar os scripts pro grid
+        ]);
+        // ------------------------------------------------------------------
+
+        const user = authResponse.data.user;
         
         if (carregandoRecuperacao) return;
 
@@ -119,7 +148,6 @@ async function checkUser() {
             const userDisplay = document.getElementById('user-display');
             if (userDisplay) userDisplay.innerText = user.email;
 
-            // RECUPERAÇÃO COM VALIDAÇÃO
             let lastScreen = localStorage.getItem('docbox_last_screen');
             const validScreens = ['main-screen', 'admin-screen']; 
             
@@ -127,7 +155,7 @@ async function checkUser() {
                 lastScreen = 'main-screen';
             }
             
-            showScreen(lastScreen);
+            showScreen(lastScreen); // Muda para a tela principal (que já deve estar com os scripts carregados)
         } else {
             showScreen('auth-screen');
         }
@@ -501,14 +529,22 @@ async function saveScript() {
 }
 
 function resetFormAdmin() {
-    document.getElementById('edit-script-id').value = '';
+    // Limpa o ID de edição para o sistema entender que o próximo é NOVO
+    const idInput = document.getElementById('edit-script-id');
+    if (idInput) idInput.value = '';
+
+    // Limpa os textos
     document.getElementById('script-title').value = '';
     document.getElementById('script-function').value = '';
     document.getElementById('script-content').value = '';
     document.getElementById('script-color').value = '#ff0000';
     
+    // Volta o texto do botão para "Criar"
     const btnSalvar = document.querySelector('#admin-screen .btn-primary');
-    if (btnSalvar) btnSalvar.innerText = "Criar Atalho";
+    if (btnSalvar) {
+        btnSalvar.innerText = "Criar Atalho";
+        btnSalvar.style.background = "var(--accent)"; // Volta para a cor padrão
+    }
 }
 
 // --- RENDERIZAÇÃO E UI ---
@@ -721,9 +757,14 @@ function restaurarDadosTemporarios() {
 }
 
 function abrirNovaAba() {
-    // Abre a mesma URL, mas avisa que esta aba deve ser "limpa"
-    const urlComReset = window.location.origin + window.location.pathname + "?reset=true";
-    window.open(urlComReset, '_blank');
+    // Cria o link primeiro para o navegador não bloquear o pop-up
+    const urlComReset = `${window.location.origin}${window.location.pathname}?reset=true`;
+    
+    // Abre imediatamente
+    const novaAba = window.open(urlComReset, '_blank');
+    
+    // Se por acaso a aba abrir, mas o foco não for nela:
+    if (novaAba) novaAba.focus();
 }
 
 // Adicione este bloco no final do seu script.js ou dentro do window.onload
@@ -760,7 +801,7 @@ function toggleScripts() {
     // Atualiza o ícone (exemplo: troca entre grid e foco)
     const btn = document.getElementById('toggle-scripts-btn');
     const icon = isHidden ? 'maximize' : 'layout-grid';
-    btn.innerHTML = `<i data-lucide="${icon}"></i><span>${isHidden ? 'Mostrar Scripts' : 'Focar Atendimento'}</span>`;
+    btn.innerHTML = `<i data-lucide="${icon}"></i><span>${isHidden ? '' : ''}</span>`;
     
     lucide.createIcons();
 }
@@ -787,6 +828,7 @@ window.copyToClipboard = copyToClipboard;
 window.saveScript = saveScript;
 window.editarScript = editarScript;
 window.deleteScript = deleteScript;
+window.resetFormAdmin = resetFormAdmin;
 window.aplicarWallpaper = aplicarWallpaper;
 window.removerWallpaper = removerWallpaper;
 window.solicitarRecuperacao = solicitarRecuperacao;
