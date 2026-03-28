@@ -75,6 +75,9 @@
         <button onclick="showScreen('admin-screen')" class="nav-item">
             <i data-lucide="plus-circle"></i> <span>Gerenciar Scripts</span>
         </button>
+        <button onclick="showScreen('history-screen')" class="nav-item">
+            <i data-lucide="history"></i> <span>Histórico</span>
+        </button>
     </div>
 
     <div class="nav-section">
@@ -168,11 +171,23 @@
                 </div>
 
                 <div class="scripts-column">
-                    <div id="grid-display" class="compact-grid">
-                        </div>
+                    <div id="grid-display" class="compact-grid"></div>
                 </div>
             </div>
         </main>
+    </section>
+
+    <section id="history-screen" class="screen hidden">
+        <div class="admin-container">
+            <header class="admin-header">
+                <button onclick="showScreen('main-screen')" class="btn-back">
+                    <i data-lucide="chevron-left"></i> Voltar
+                </button>
+                <h2>Últimos 8 Atendimentos</h2>
+            </header>
+            <div id="history-list" class="history-grid">
+                </div>
+        </div>
     </section>
 
     <section id="admin-screen" class="screen hidden">
