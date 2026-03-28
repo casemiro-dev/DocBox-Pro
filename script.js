@@ -13,6 +13,8 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let allScripts = [];
 let carregandoRecuperacao = false;
+let atendimentoRecuperadoOriginal = null;
+
 
 // --- LÓGICA DE ABAS (MANTIDA) ---
 if (!sessionStorage.getItem('tab_id') || window.location.search.includes('reset=true')) {
@@ -70,6 +72,11 @@ function showScreen(screenId) {
     }
 
     lucide.createIcons();
+
+    // ADICIONE ISSO AQUI:
+    if (screenId === 'history-screen') {
+        renderHistorico();
+    }
 }
 
 // --- AUTENTICAÇÃO ---
@@ -317,20 +324,40 @@ async function transferirAtendimento() {
 }
 
 async function saveAtendimento() {
-    // 1. Coleta os dados dos inputs
+    // 1. Coleta os dados
     const nome = document.getElementById('at-nome').value.trim();
     const protocolo = document.getElementById('at-protocolo').value.trim();
     const doc = document.getElementById('at-doc').value.trim();
     const tel = document.getElementById('at-tel').value.trim();
     const relato = document.getElementById('at-relato').value.trim();
 
-    // 2. Validação RIGOROSA (Obrigatório: Nome, CPF/CNPJ, Telefone, Protocolo e Relato)
+    // 2. Validação de campos vazios
     if (!nome || !protocolo || !doc || !tel || !relato) {
         return alert("⚠️ Todos os campos são obrigatórios: Nome, Protocolo, CPF/CNPJ, Telefone e Relato!");
     }
 
-    // 3. Envia para a NOVA tabela (atendimentos_pendentes)
-    // Note que não usamos user_id aqui para que OUTRO operador possa resgatar
+    // --- NOVA TRAVA: VERIFICAÇÃO DE DUPLICIDADE NO SUPABASE ---
+    try {
+        const { data: existente, error: erroBusca } = await supabaseClient
+            .from('atendimentos_pendentes')
+            .select('protocolo')
+            .eq('protocolo', protocolo)
+            .maybeSingle(); // Busca se existe um registro com esse protocolo
+
+        if (erroBusca) throw erroBusca;
+
+        if (existente) {
+            return alert(`⚠️ Ops! O protocolo ${protocolo} já foi salvo no banco de dados anteriormente.`);
+        }
+    } catch (err) {
+        console.error("Erro ao verificar duplicidade:", err);
+    }
+    // ---------------------------------------------------------
+
+    // 3. Se passou pela trava, salva no histórico local
+    salvarNoHistoricoLocal();
+
+    // 4. Envia para o Supabase
     const { error } = await supabaseClient.from('atendimentos_pendentes').insert([{
         nome: nome, 
         protocolo: protocolo, 
@@ -342,8 +369,8 @@ async function saveAtendimento() {
     if (error) {
         alert("Erro ao salvar no banco: " + error.message);
     } else {
-        showToast("Atendimento salvo para o próximo operador!");
-        limparCamposSemConfirmacao(); // Limpa a tela após salvar
+        showToast("Atendimento enviado e salvo no histórico!");
+        limparCamposSemConfirmacao(); 
     }
 }
 
@@ -386,6 +413,9 @@ function limparCampos() {
 }
 
 function limparCamposSemConfirmacao() {
+    // --- SALVA NO HISTÓRICO ANTES DE LIMPAR ---
+    salvarNoHistoricoLocal();
+    // ------------------------------------------
     const campos = ['at-nome', 'at-protocolo', 'at-doc', 'at-tel', 'at-relato'];
     
     campos.forEach(id => {
@@ -806,6 +836,49 @@ function toggleScripts() {
     lucide.createIcons();
 }
 
+function salvarNoHistoricoLocal() {
+    const nome = document.getElementById('at-nome').value.trim();
+    const protocolo = document.getElementById('at-protocolo').value.trim();
+    const doc = document.getElementById('at-doc').value.trim();
+
+    if (nome || protocolo || doc) {
+        // --- NOVA TRAVA: Se for IDENTICO ao que acabei de recuperar, não salva de novo ---
+        if (atendimentoRecuperadoOriginal && 
+            atendimentoRecuperadoOriginal.nome === nome && 
+            atendimentoRecuperadoOriginal.protocolo === protocolo && 
+            atendimentoRecuperadoOriginal.documento === doc) {
+            
+            atendimentoRecuperadoOriginal = null; // Reseta a trava
+            return; 
+        }
+
+        let historico = JSON.parse(localStorage.getItem('docbox_historico')) || [];
+
+        // Filtro Anti-Duplicidade (para não salvar duas vezes seguidas o mesmo)
+        if (historico.length > 0) {
+            const ultimo = historico[0];
+            if (ultimo.nome === nome && ultimo.protocolo === protocolo && ultimo.documento === doc) {
+                return;
+            }
+        }
+
+        const item = {
+            id: Date.now(),
+            nome: nome || "Sem Nome",
+            protocolo: protocolo || "Sem Protocolo",
+            documento: doc || "Sem CPF/CNPJ",
+            data: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        historico.unshift(item);
+        if (historico.length > 8) historico = historico.slice(0, 8);
+        localStorage.setItem('docbox_historico', JSON.stringify(historico));
+        
+        // Reseta a trava após um novo salvamento legítimo
+        atendimentoRecuperadoOriginal = null;
+    }
+}
+
 // EXPOSIÇÃO GLOBAL COMPLETA
 window.handleLogin = handleLogin;
 window.handleSignUp = handleSignUp;
@@ -833,3 +906,75 @@ window.aplicarWallpaper = aplicarWallpaper;
 window.removerWallpaper = removerWallpaper;
 window.solicitarRecuperacao = solicitarRecuperacao;
 window.atualizarSenha = atualizarSenha;
+
+// --- FUNÇÃO PARA RENDERIZAR O HISTÓRICO LOCAL ---
+window.renderHistorico = function() {
+    const listaContainer = document.getElementById('history-list');
+    if (!listaContainer) return;
+    
+    const historico = JSON.parse(localStorage.getItem('docbox_historico')) || [];
+
+    if (historico.length === 0) {
+        listaContainer.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 20px;">Histórico vazio.</p>';
+        return;
+    }
+
+    listaContainer.innerHTML = historico.map(at => `
+        <div class="history-card" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative;">
+            <button onclick="excluirItemHistorico(${at.id})" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #f85149; cursor: pointer; font-size: 16px; font-weight: bold; padding: 5px;">
+                &times;
+            </button>
+
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px; padding-right: 20px;">
+                <h4 style="margin:0; color:var(--accent); font-size: 14px;">${at.nome}</h4>
+                <small style="opacity:0.5; font-size: 10px;">${at.data}</small>
+            </div>
+            <div style="font-size: 12px; line-height: 1.4;">
+                <p style="margin: 2px 0;"><strong>Prot:</strong> ${at.protocolo}</p>
+                <p style="margin: 2px 0;"><strong>Doc:</strong> ${at.documento}</p>
+            </div>
+            <button class="btn-secondary" onclick="reaproveitarAtendimento(${at.id})" style="width: 100%; margin-top: 10px; padding: 6px; font-size: 11px; cursor: pointer;">
+                Recuperar Dados
+            </button>
+        </div>
+    `).join('');
+};
+
+window.excluirItemHistorico = function(id) {
+    // 1. Pega o histórico atual
+    let historico = JSON.parse(localStorage.getItem('docbox_historico')) || [];
+    
+    // 2. Filtra removendo o item com o ID clicado
+    historico = historico.filter(item => item.id !== id);
+    
+    // 3. Salva de volta no LocalStorage
+    localStorage.setItem('docbox_historico', JSON.stringify(historico));
+    
+    // 4. Atualiza a tela imediatamente
+    renderHistorico();
+    
+    showToast("Item removido do histórico");
+};
+
+
+// Função para jogar os dados de volta nos campos de texto
+window.reaproveitarAtendimento = function(id) {
+    const historico = JSON.parse(localStorage.getItem('docbox_historico')) || [];
+    const at = historico.find(item => item.id === id);
+    
+    if (at) {
+        document.getElementById('at-nome').value = at.nome !== "Sem Nome" ? at.nome : "";
+        document.getElementById('at-protocolo').value = at.protocolo !== "Sem Protocolo" ? at.protocolo : "";
+        document.getElementById('at-doc').value = at.documento !== "Sem CPF/CNPJ" ? at.documento : "";
+        
+        // --- NOVA TRAVA: Guarda uma cópia do que foi recuperado ---
+        atendimentoRecuperadoOriginal = {
+            nome: document.getElementById('at-nome').value,
+            protocolo: document.getElementById('at-protocolo').value,
+            documento: document.getElementById('at-doc').value
+        };
+
+        showScreen('main-screen');
+        if (typeof atualizarTituloPagina === 'function') atualizarTituloPagina();
+    }
+};
