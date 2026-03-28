@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocBox Pro</title>
+    <link rel="dns-prefetch" href="https://seu-projeto.supabase.co">
+    <link rel="preconnect" href="https://seu-projeto.supabase.co" crossorigin>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -174,57 +176,61 @@
     </section>
 
     <section id="admin-screen" class="screen hidden">
-        <div class="admin-container">
-            <header class="admin-header">
-                <button onclick="showScreen('main-screen')" class="btn-back">
-                    <i data-lucide="chevron-left"></i> Voltar
-                </button>
-                <h2>Configurações</h2>
-            </header>
-            
-            <div class="admin-grid">
-    <div class="form-card">
-        <h3>Novo Script</h3>
-        <input type="hidden" id="edit-script-id" value="">
-        <input type="text" id="script-title" placeholder="Título (Opcional)">
-        <input type="text" id="script-function" placeholder="Categoria (Ex: Suporte)">
-        <textarea id="script-content" rows="6" placeholder="Texto para copiar..."></textarea>
-        
-        <div class="color-row" style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 14px;">Cor do Card:</label>
-            <select id="script-color" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text-bold);">
-                <option value="#ff0000" style="background: #ff0000; color: white;">Vermelho</option>
-                <option value="#ff7f00" style="background: #ff7f00;">Laranja</option>
-                <option value="#ffff00" style="background: #ffff00; color: black;">Amarelo</option>
-                <option value="#00ff00" style="background: #00ff00; color: black;">Verde</option>
-                <option value="#0000ff" style="background: #0000ff; color: white;">Azul</option>
-                <option value="#4b0082" style="background: #4b0082; color: white;">Anil</option>
-                <option value="#9400d3" style="background: #9400d3; color: white;">Violeta</option>
-                <option value="#000000" style="background: #000000; color: white;">Preto</option>
-                <option value="#808080" style="background: #808080; color: white;">Cinza</option>
-                <option value="#ffffff" style="background: #ffffff; color: black;">Branco</option>
-            </select>
-        </div>
-        
-        <button onclick="saveScript()" class="btn-primary">Registrar Atalho</button>
-    </div>
+    <div class="admin-container">
+        <header class="admin-header">
+            <button onclick="showScreen('main-screen')" class="btn-back">
+                <i data-lucide="chevron-left"></i> Voltar
+            </button>
+            <h2>Configurações</h2>
+        </header>
 
-    <div class="manage-area">
-        <div class="form-card" style="margin-bottom: 30px;">
-            <h3>Papel de Parede</h3>
-            <p class="subtitle" style="margin-bottom: 15px;">Cole a URL de uma imagem ou GIF (Giphy, Pinterest, etc)</p>
-            <input type="text" id="bg-url" placeholder="https://exemplo.com/imagem.gif">
-            <div class="button-grid-atendimento" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn-primary" onclick="aplicarWallpaper()">Aplicar</button>
-                <button class="btn-danger" onclick="removerWallpaper()">Remover</button>
-            </div>
-        </div>
+        <div class="admin-grid">
+            <div class="form-card">
+                <h3>Novo Script</h3>
+                <input type="hidden" id="edit-script-id" value="">
+                <input type="text" id="script-title" placeholder="Título (Opcional)">
+                <input type="text" id="script-function" placeholder="Categoria (Ex: Suporte)">
+                <textarea id="script-content" rows="6" placeholder="Texto para copiar..."></textarea>
 
-        <h3>Lista de Exclusão</h3>
-        <div id="admin-list" class="admin-list"></div>
-    </div>
+                <div class="color-row" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 14px;">Cor do Card:</label>
+                    <select id="script-color" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text-bold);">
+                        <option value="#ff0000" style="background: #ff0000; color: white;">Vermelho</option>
+                        <option value="#ff7f00" style="background: #ff7f00;">Laranja</option>
+                        <option value="#ffff00" style="background: #ffff00; color: black;">Amarelo</option>
+                        <option value="#00ff00" style="background: #00ff00; color: black;">Verde</option>
+                        <option value="#0000ff" style="background: #0000ff; color: white;">Azul</option>
+                        <option value="#4b0082" style="background: #4b0082; color: white;">Anil</option>
+                        <option value="#9400d3" style="background: #9400d3; color: white;">Violeta</option>
+                        <option value="#000000" style="background: #000000; color: white;">Preto</option>
+                        <option value="#808080" style="background: #808080; color: white;">Cinza</option>
+                        <option value="#ffffff" style="background: #ffffff; color: black;">Branco</option>
+                    </select>
+                </div>
+
+                <div class="admin-btns-group" style="display: flex; gap: 10px; width: 100%;">
+    <button onclick="saveScript()" class="btn-primary" style="flex: 1; margin-bottom: 0;">
+        Registrar Atalho
+    </button>
+    <button onclick="resetFormAdmin()" class="btn-secondary" style="flex: 1;">
+        <i data-lucide="plus-circle" style="width: 16px; vertical-align: middle; margin-right: 5px;"></i>
+        Novo / Limpar
+    </button>
 </div>
-</div>
+            </div> <div class="manage-area">
+                <div class="form-card" style="margin-bottom: 30px;">
+                    <h3>Papel de Parede</h3>
+                    <p class="subtitle" style="font-size: 13px; opacity: 0.7; margin-bottom: 15px;">Cole a URL de uma imagem ou GIF (Giphy, Pinterest, etc)</p>
+                    <input type="text" id="bg-url" placeholder="https://exemplo.com/imagem.gif">
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn-primary" style="flex: 1;" onclick="aplicarWallpaper()">Aplicar</button>
+                        <button class="btn-danger" style="flex: 1;" onclick="removerWallpaper()">Remover</button>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 15px; color: var(--text-bold);">Lista de Exclusão</h3>
+                <div id="admin-list" class="admin-list"></div>
+            </div> </div> </div>
 </section>
 
 <section id="reset-password-screen" class="screen hidden flex-center">
