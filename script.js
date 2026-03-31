@@ -9,11 +9,13 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-// --- RESTO DO SEU CÓDIGO (VARIÁVEIS GLOBAIS) ---
+// --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
 let allScripts = [];
 let carregandoRecuperacao = false;
 let atendimentoRecuperadoOriginal = null;
+// APAGUEI a 'ultimoProtocoloResgatado' porque a de baixo já faz o serviço:
+let ultimaBuscaSucesso = { protocolo: "", documento: "" };
 
 
 // --- LÓGICA DE ABAS (MANTIDA) ---
@@ -374,37 +376,65 @@ async function saveAtendimento() {
     }
 }
 
+// Guarda protocolos que já buscamos e não retornaram nada, para não repetir a busca à toa
 async function buscarAtendimentoSalvo() {
-    const protocolo = document.getElementById('at-protocolo').value.trim();
-    const documento = document.getElementById('at-doc').value.trim();
+    const protInput = document.getElementById('at-protocolo');
+    const docInput = document.getElementById('at-doc');
+    if (!protInput || !docInput) return;
+
+    const protocolo = protInput.value.trim();
+    const documento = docInput.value.trim();
+
+    // Reset se limpar os campos
+    if (!protocolo && !documento) {
+        ultimaBuscaSucesso = { protocolo: "", documento: "" };
+        return;
+    }
 
     if (protocolo.length < 5 && documento.length < 5) return;
 
-    // Mudamos para buscar uma lista e ordenar pelo mais novo
-    const { data, error } = await supabaseClient
-        .from('atendimentos_pendentes')
-        .select('*')
-        .or(`protocolo.eq.${protocolo},documento.eq.${documento}`)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false }) // Puxa o último que foi salvo
-        .limit(1); // Pega apenas o primeiro da lista (o mais novo)
+    // --- NOVA LÓGICA DE TRAVA DUPLA ---
+    // Só ignora se o protocolo digitado FOR o último resgatado 
+    // E o documento digitado TAMBÉM FOR o último resgatado.
+    if (protocolo === ultimaBuscaSucesso.protocolo && documento === ultimaBuscaSucesso.documento) {
+        return;
+    }
 
-    // Como agora o resultado vem em um Array [], verificamos se há itens nele
-    if (data && data.length > 0) {
-        const atendimento = data[0]; // Extrai o atendimento do array
+    try {
+        const { data, error } = await supabaseClient
+            .from('atendimentos_pendentes')
+            .select('*')
+            .or(`protocolo.eq.${protocolo},documento.eq.${documento}`)
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        document.getElementById('at-nome').value = atendimento.nome;
-        document.getElementById('at-doc').value = atendimento.documento;
-        document.getElementById('at-tel').value = atendimento.telefone;
-        document.getElementById('at-protocolo').value = atendimento.protocolo;
-        document.getElementById('at-relato').value = atendimento.relato;
+        if (error) throw error;
 
-        // Remove do banco pelo ID único para não sobrar lixo
-        await supabaseClient.from('atendimentos_pendentes').delete().eq('id', atendimento.id);
-        
-        showToast("Atendimento resgatado!");
-        atualizarTituloPagina();
-        salvarDadosTemporarios(); // Atualiza o rascunho local (F5)
+        if (data && data.length > 0) {
+            const atendimento = data[0];
+            
+            // Grava os dois dados na trava de sucesso
+            ultimaBuscaSucesso.protocolo = atendimento.protocolo || "";
+            ultimaBuscaSucesso.documento = atendimento.documento || "";
+
+            // Preenche tudo na tela
+            document.getElementById('at-nome').value = atendimento.nome || "";
+            document.getElementById('at-tel').value = atendimento.telefone || "";
+            document.getElementById('at-relato').value = atendimento.relato || "";
+            protInput.value = atendimento.protocolo || "";
+            docInput.value = atendimento.documento || "";
+
+            // Deleta do banco para não dar conflito
+            await supabaseClient.from('atendimentos_pendentes').delete().eq('id', atendimento.id);
+            
+            showToast("Atendimento resgatado!");
+            atualizarTituloPagina();
+            salvarDadosTemporarios();
+        }
+    } catch (err) {
+        console.error("Erro no resgate:", err);
+        ultimaBuscaSucesso = { protocolo: "", documento: "" }; 
     }
 }
 
@@ -413,9 +443,11 @@ function limparCampos() {
 }
 
 function limparCamposSemConfirmacao() {
-    // --- SALVA NO HISTÓRICO ANTES DE LIMPAR ---
     salvarNoHistoricoLocal();
-    // ------------------------------------------
+    
+    // Reset da trava dupla
+    ultimaBuscaSucesso = { protocolo: "", documento: "" }; 
+
     const campos = ['at-nome', 'at-protocolo', 'at-doc', 'at-tel', 'at-relato'];
     
     campos.forEach(id => {
@@ -458,25 +490,30 @@ function copiarRegistro() {
 }
 
 // --- LÓGICA DE SCRIPTS (CRUD COMPLETO) ---
+async function loadScripts(forceRefresh = false) {
+    // Se já temos scripts e NÃO pedimos para forçar a atualização, sai da função (Economiza Banco)
+    if (allScripts.length > 0 && !forceRefresh) return;
 
-async function loadScripts() {
-    // TRAVA: Se não houver cliente conectado, para aqui
     if (!supabaseClient) return console.warn("Supabase não conectado.");
 
     const { data, error } = await supabaseClient.from('scripts').select('*');
+    
     if (!error) {
         allScripts = data; 
+        
         const colorOrder = {
             "#ff0000": 1, "#ff7f00": 2, "#ffff00": 3, "#00ff00": 4,
             "#0000ff": 5, "#4b0082": 6, "#9400d3": 7, "#000000": 8,
             "#808080": 9, "#ffffff": 10
         };
-        const sortedData = data.sort((a, b) => {
+
+        const sortedData = [...data].sort((a, b) => {
             const weightA = colorOrder[a.color?.toLowerCase()] || 99;
             const weightB = colorOrder[b.color?.toLowerCase()] || 99;
             if (weightA !== weightB) return weightA - weightB;
             return (a.title || "").localeCompare(b.title || "");
         });
+
         renderMainGrid(sortedData);
         renderAdminList(sortedData);
         lucide.createIcons();
@@ -552,7 +589,7 @@ async function saveScript() {
         // Limpa o formulário (se você tiver essa função definida)
         if (typeof resetFormAdmin === 'function') resetFormAdmin();
         
-        loadScripts(); // Recarrega a lista
+        loadScripts(true); // Recarrega a lista
     } else {
         alert("Erro ao salvar: " + result.error.message);
     }
@@ -631,7 +668,7 @@ async function deleteScript(id) {
     const { error } = await supabaseClient.from('scripts').delete().eq('id', id);
     if (!error) {
         showToast("Script excluído!");
-        loadScripts();
+        loadScripts(true);
     } else {
         alert("Erro ao excluir: " + error.message);
     }
@@ -667,16 +704,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. RESTAURAR DADOS (Evita perda no F5)
     restaurarDadosTemporarios();
 
-    // 4. BUSCA AUTOMÁTICA OTIMIZADA (Busca enquanto digita, sem precisar clicar fora)
-    const camposBusca = ['at-protocolo', 'at-doc'];
-    camposBusca.forEach(id => {
-        document.getElementById(id)?.addEventListener('input', () => {
-            const val = document.getElementById(id).value.trim();
-            // Dispara a busca automática se o dado parecer completo (Protocolo ou CPF/CNPJ)
-            if (val.length >= 8) {
-                buscarAtendimentoSalvo();
-            }
-        });
+   // 4. BUSCA AUTOMÁTICA (Corrigida para não travar)
+    let debounceTimer;
+
+    ['at-protocolo', 'at-doc'].forEach(id => {
+        const elemento = document.getElementById(id);
+        if (elemento) {
+            elemento.addEventListener('input', () => {
+                const val = elemento.value.trim();
+                
+                // Se o usuário apagar o campo, libera a trava IMEDIATAMENTE
+                if (val === "") {
+                    ultimoProtocoloResgatado = "";
+                }
+
+                clearTimeout(debounceTimer);
+                if (val.length >= 5) {
+                    debounceTimer = setTimeout(() => {
+                        buscarAtendimentoSalvo();
+                    }, 350); // Aumentei levemente para 350ms para estabilidade
+                }
+            });
+        }
     });
 
     // 5. SALVAMENTO DINÂMICO (Monitora todos os campos para o rascunho)
@@ -837,45 +886,64 @@ function toggleScripts() {
 }
 
 function salvarNoHistoricoLocal() {
-    const nome = document.getElementById('at-nome').value.trim();
-    const protocolo = document.getElementById('at-protocolo').value.trim();
-    const doc = document.getElementById('at-doc').value.trim();
+    const nome = document.getElementById('at-nome')?.value.trim() || "";
+    const protocolo = document.getElementById('at-protocolo')?.value.trim() || "";
+    const doc = document.getElementById('at-doc')?.value.trim() || "";
 
-    if (nome || protocolo || doc) {
-        // --- NOVA TRAVA: Se for IDENTICO ao que acabei de recuperar, não salva de novo ---
-        if (atendimentoRecuperadoOriginal && 
-            atendimentoRecuperadoOriginal.nome === nome && 
-            atendimentoRecuperadoOriginal.protocolo === protocolo && 
-            atendimentoRecuperadoOriginal.documento === doc) {
-            
-            atendimentoRecuperadoOriginal = null; // Reseta a trava
-            return; 
-        }
+    // --- REGRA DE OURO: VALIDAÇÃO DOS 3 PILARES ---
+    // Só salva se tiver os 3 preenchidos. Se faltar um, ele não polui o histórico.
+    if (!nome || !protocolo || !doc) {
+        return; 
+    }
 
-        let historico = JSON.parse(localStorage.getItem('docbox_historico')) || [];
-
-        // Filtro Anti-Duplicidade (para não salvar duas vezes seguidas o mesmo)
-        if (historico.length > 0) {
-            const ultimo = historico[0];
-            if (ultimo.nome === nome && ultimo.protocolo === protocolo && ultimo.documento === doc) {
-                return;
-            }
-        }
-
-        const item = {
-            id: Date.now(),
-            nome: nome || "Sem Nome",
-            protocolo: protocolo || "Sem Protocolo",
-            documento: doc || "Sem CPF/CNPJ",
-            data: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        };
-
-        historico.unshift(item);
-        if (historico.length > 8) historico = historico.slice(0, 8);
-        localStorage.setItem('docbox_historico', JSON.stringify(historico));
+    // --- TRAVA: Evita salvar o que você acabou de recuperar do banco ---
+    if (atendimentoRecuperadoOriginal && 
+        atendimentoRecuperadoOriginal.nome === nome && 
+        atendimentoRecuperadoOriginal.protocolo === protocolo && 
+        atendimentoRecuperadoOriginal.documento === doc) {
         
-        // Reseta a trava após um novo salvamento legítimo
-        atendimentoRecuperadoOriginal = null;
+        atendimentoRecuperadoOriginal = null; // Reseta para a próxima ação
+        return; 
+    }
+
+    // Carrega o histórico existente
+    let historico = JSON.parse(localStorage.getItem('docbox_historico')) || [];
+
+    // --- FILTRO ANTI-DUPLICIDADE: Não salva o mesmo cliente duas vezes seguidas ---
+    if (historico.length > 0) {
+        const ultimo = historico[0];
+        if (ultimo.protocolo === protocolo && ultimo.documento === doc) {
+            return;
+        }
+    }
+
+    // --- CRIAÇÃO DO ITEM ---
+    const item = {
+        id: Date.now(),
+        nome: nome,
+        protocolo: protocolo,
+        documento: doc,
+        // Formato de hora amigável para o histórico
+        data: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    // Adiciona no topo da lista
+    historico.unshift(item);
+
+    // Mantém apenas os últimos 8 registros para o histórico ficar limpo e rápido
+    if (historico.length > 8) {
+        historico = historico.slice(0, 8);
+    }
+
+    // Salva no navegador
+    localStorage.setItem('docbox_historico', JSON.stringify(historico));
+    
+    // Reseta a trava global de recuperação
+    atendimentoRecuperadoOriginal = null;
+
+    // Se você tiver uma função que desenha o histórico na tela, chame-a aqui:
+    if (typeof renderHistorico === 'function') {
+        renderHistorico();
     }
 }
 
