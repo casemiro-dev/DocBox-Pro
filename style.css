@@ -213,17 +213,17 @@ body {
 .btn-secondary {
     padding: 12px; background: var(--border); color: var(--text-bold);
     border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
 .btn-secondary:hover { 
     background: var(--card); 
     border-color: var(--accent); 
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(56, 139, 253, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(56, 139, 253, 0.15);
 }
-.btn-secondary:active { transform: translateY(0); }
+.btn-secondary:active { transform: translateY(-1px); }
 
 .btn-danger {
     padding: 12px; 
@@ -233,15 +233,15 @@ body {
     border-radius: 8px; 
     cursor: pointer; 
     font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-danger:hover { 
     background-color: #6e3636 !important; 
     color: #fff !important; 
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(248, 81, 73, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(248, 81, 73, 0.25);
 }
-.btn-danger:active { transform: translateY(0); }
+.btn-danger:active { transform: translateY(-1px); }
 
 /* ==========================================================================
    SIDEBAR (NAVEGAÇÃO)
@@ -347,6 +347,50 @@ nav {
 
 .scripts-column { 
     flex: 1; 
+    display: flex;
+    flex-direction: column;
+}
+
+.scripts-header {
+    margin-bottom: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    padding-bottom: 10px;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text);
+    width: 18px;
+    height: 18px;
+    opacity: 0.5;
+}
+
+#script-search {
+    width: 100%;
+    padding: 14px 14px 14px 45px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-bold);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#script-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(56, 139, 253, 0.1);
 }
 
 .form-card { 
@@ -365,19 +409,19 @@ nav {
     display: flex; 
     gap: 10px; 
     width: 100%; 
-    align-items: flex-start;
+    align-items: center; /* Alinhamento centralizado verticalmente */
+    margin-bottom: 10px;
 }
 
 .input-row > input, 
-.input-row > div,
 .input-row > .input-container-relative { 
-    flex: 1 1 0% !important; 
-    width: 0; 
-    min-width: 0;
+    flex: 1; 
+    width: 100%;
 }
 
 .input-container-relative input {
     width: 100% !important;
+    height: 100%; /* Garante que todos tenham a mesma altura */
 }
 
 .button-grid-atendimento {
@@ -649,10 +693,28 @@ input:focus, textarea:focus, select:focus {
    RESPONSIVIDADE (MOBILE)
    ========================================================================== */
 @media (max-width: 1100px) {
-    .workspace-layout { flex-direction: column; height: auto; padding: 15px; align-items: center; }
-    .atendimento-column { width: 100%; max-width: 650px; }
-    .scripts-column { width: 100%; margin-top: 20px; padding-bottom: 40px; }
-    .compact-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .workspace-layout { 
+        flex-direction: column; 
+        height: auto; 
+        padding: 15px; 
+        align-items: center; 
+        gap: 20px;
+    }
+    .atendimento-column { 
+        width: 100%; 
+        max-width: 650px; 
+        margin: 0 auto;
+    }
+    .scripts-column { 
+        width: 100%; 
+        max-width: 650px; /* Garante que os scripts não fiquem mais largos que o formulário */
+        margin-top: 0; 
+        padding-bottom: 40px; 
+    }
+    .compact-grid { 
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Ajuste para caber melhor em telas menores */
+        gap: 15px;
+    }
 }
 
 /* Estilos para o Overlay (Fundo escuro) */
