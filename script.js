@@ -64,7 +64,7 @@ function showScreen(screenId) {
         target.style.display = 'flex';
     }
     
-    if (screenId !== 'auth-screen' && screenId !== 'reset-password-screen') {
+    if (screenId !== 'auth-screen' && screenId !== 'reset-password-screen' && screenId !== 'signup-screen') {
         localStorage.setItem('docbox_last_screen', screenId);
     }
     
@@ -120,10 +120,40 @@ if (document.getElementById('password')) {
 // ---------------------------------------------------
 
 async function handleSignUp() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    // Usa os campos da tela de cadastro dedicada
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+    if (!email || !password) {
+        return alert("Preencha o e-mail e a senha!");
+    }
+
+    if (password.length < 6) {
+        return alert("A senha deve ter pelo menos 6 caracteres!");
+    }
+
+    if (password !== confirmPassword) {
+        return alert("As senhas não coincidem! Verifique e tente novamente.");
+    }
+
+    const btn = document.querySelector('#signup-screen .btn-primary');
+    if (btn) { btn.disabled = true; btn.innerText = 'Criando conta...'; }
+
     const { error } = await supabaseClient.auth.signUp({ email, password });
-    alert(error ? error.message : "Cadastro enviado! Verifique seu e-mail.");
+    
+    if (btn) { btn.disabled = false; btn.innerText = 'Criar Conta'; }
+
+    if (error) {
+        alert("Erro: " + error.message);
+    } else {
+        alert("Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro antes de fazer login.");
+        // Limpa os campos e volta para o login
+        document.getElementById('signup-email').value = '';
+        document.getElementById('signup-password').value = '';
+        document.getElementById('signup-confirm-password').value = '';
+        showScreen('auth-screen');
+    }
 }
 
 async function handleLogout() { 
@@ -760,31 +790,65 @@ function solicitarRecuperacao() {
     const email = document.getElementById('email').value;
     if (!email) return alert("Digite seu e-mail no campo acima!");
 
+    // A URL de redirecionamento deve apontar para a origem da aplicação
+    // O Supabase vai adicionar automaticamente os tokens de recuperação como fragmento (#)
+    const redirectUrl = window.location.origin + window.location.pathname;
+
     supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.href,
+        redirectTo: redirectUrl,
     }).then(({error}) => {
         if (error) alert("Erro: " + error.message);
-        else alert("E-mail de recuperação enviado!");
+        else alert("E-mail de recuperação enviado! Verifique sua caixa de entrada e clique no link recebido.");
     });
 }
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
-        carregandoRecuperacao = true; 
+        carregandoRecuperacao = true;
+        // Esconde a tela de carregamento se ainda estiver visível
+        const loading = document.getElementById('loading-screen');
+        if (loading) {
+            loading.style.opacity = '0';
+            setTimeout(() => { if (loading.parentNode) loading.remove(); }, 300);
+        }
         showScreen('reset-password-screen');
+    }
+    // Quando o usuário faz login após redefinir a senha, redireciona para a tela principal
+    if (event === "SIGNED_IN" && carregandoRecuperacao) {
+        // Não redireciona automaticamente durante o fluxo de recuperação
+        return;
     }
 });
 
 async function atualizarSenha() {
     const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-new-password')?.value;
+
     if (!newPassword) return alert("Digite a nova senha!");
+    
+    // Validação mínima de segurança
+    if (newPassword.length < 6) {
+        return alert("A senha deve ter pelo menos 6 caracteres!");
+    }
+
+    // Verifica confirmação se o campo existir
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+        return alert("As senhas não coincidem! Verifique e tente novamente.");
+    }
+
+    const btn = document.querySelector('#reset-password-screen .btn-primary');
+    if (btn) { btn.disabled = true; btn.innerText = 'Atualizando...'; }
 
     const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
 
-    if (error) alert("Erro ao atualizar: " + error.message);
-    else {
-        alert("Senha atualizada com sucesso!");
+    if (error) {
+        alert("Erro ao atualizar: " + error.message);
+        if (btn) { btn.disabled = false; btn.innerText = 'Atualizar Senha'; }
+    } else {
+        alert("Senha atualizada com sucesso! Faça login com a nova senha.");
         carregandoRecuperacao = false;
+        // Faz logout para forçar novo login com a senha atualizada
+        await supabaseClient.auth.signOut();
         showScreen('auth-screen');
     }
 }
@@ -947,6 +1011,78 @@ function salvarNoHistoricoLocal() {
     }
 }
 
+// --- FUNÇÕES DE VALIDAÇÃO DE SENHA EM TEMPO REAL (TELA DE CADASTRO) ---
+
+function validarSenhaSignup() {
+    const senha = document.getElementById('signup-password')?.value || '';
+    
+    // Validação dos requisitos
+    const temMinimo = senha.length >= 6;
+    const temLetra = /[a-zA-Z]/.test(senha);
+    const temNumero = /[0-9]/.test(senha);
+
+    // Atualiza as regras visuais
+    atualizarRegra('rule-length', temMinimo);
+    atualizarRegra('rule-letter', temLetra);
+    atualizarRegra('rule-number', temNumero);
+
+    // Calcula força
+    let forca = 0;
+    if (temMinimo) forca++;
+    if (temLetra) forca++;
+    if (temNumero) forca++;
+    if (senha.length >= 8) forca++;
+    if (/[^a-zA-Z0-9]/.test(senha)) forca++; // Símbolo especial
+
+    const fill = document.getElementById('signup-strength-fill');
+    const label = document.getElementById('signup-strength-label');
+    
+    if (fill && label) {
+        const pct = (forca / 5) * 100;
+        fill.style.width = pct + '%';
+        
+        if (forca <= 1) {
+            fill.style.background = '#f85149';
+            label.innerText = 'Senha fraca';
+            label.style.color = '#f85149';
+        } else if (forca <= 3) {
+            fill.style.background = '#e3b341';
+            label.innerText = 'Senha média';
+            label.style.color = '#e3b341';
+        } else {
+            fill.style.background = '#3fb950';
+            label.innerText = 'Senha forte';
+            label.style.color = '#3fb950';
+        }
+    }
+}
+
+function validarConfirmacaoSignup() {
+    const senha = document.getElementById('signup-password')?.value || '';
+    const confirmar = document.getElementById('signup-confirm-password')?.value || '';
+    const input = document.getElementById('signup-confirm-password');
+    
+    if (!input || !confirmar) return;
+    
+    if (senha === confirmar) {
+        input.style.borderColor = '#3fb950';
+    } else {
+        input.style.borderColor = '#f85149';
+    }
+}
+
+function atualizarRegra(id, valido) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (valido) {
+        el.classList.add('rule-ok');
+        el.classList.remove('rule-fail');
+    } else {
+        el.classList.remove('rule-ok');
+        el.classList.add('rule-fail');
+    }
+}
+
 // EXPOSIÇÃO GLOBAL COMPLETA
 window.handleLogin = handleLogin;
 window.handleSignUp = handleSignUp;
@@ -974,6 +1110,8 @@ window.aplicarWallpaper = aplicarWallpaper;
 window.removerWallpaper = removerWallpaper;
 window.solicitarRecuperacao = solicitarRecuperacao;
 window.atualizarSenha = atualizarSenha;
+window.validarSenhaSignup = validarSenhaSignup;
+window.validarConfirmacaoSignup = validarConfirmacaoSignup;
 
 // --- FUNÇÃO PARA RENDERIZAR O HISTÓRICO LOCAL ---
 window.renderHistorico = function() {
