@@ -11,6 +11,8 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // --- VARIÁVEIS GLOBAIS ---
 let currentUser = null;
+// Contexto de áudio para feedback sonoro
+let audioCtx = null;
 let allScripts = [];
 let carregandoRecuperacao = false;
 let atendimentoRecuperadoOriginal = null;
@@ -359,6 +361,7 @@ async function transferirAtendimento() {
         await buscarAtendimentoSalvo(); 
         
         showToast("Dados transferidos e buscados!");
+        tocarSomSucesso();
 
     } catch (err) {
         showToast("Erro ao ler área de transferência.", true);
@@ -662,6 +665,12 @@ function resetFormAdmin() {
 function renderMainGrid(list) {
     const grid = document.getElementById('grid-display');
     if (!grid) return;
+    
+    if (list.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.5;">Nenhum script encontrado.</div>`;
+        return;
+    }
+
     grid.innerHTML = list.map(s => `
         <div class="script-card" style="border-left-color: ${s.color}" onclick="copyToClipboard(\`${s.content}\`)">
             <div>
@@ -671,6 +680,20 @@ function renderMainGrid(list) {
             <small style="color: var(--accent); font-weight: bold; margin-top: 8px;">${s.function_name}</small>
         </div>
     `).join('');
+}
+
+function filtrarScripts() {
+    const termo = document.getElementById('script-search').value.toLowerCase().trim();
+    
+    const filtrados = allScripts.filter(s => {
+        const titulo = (s.title || "").toLowerCase();
+        const categoria = (s.function_name || "").toLowerCase();
+        const conteudo = (s.content || "").toLowerCase();
+        
+        return titulo.includes(termo) || categoria.includes(termo) || conteudo.includes(termo);
+    });
+
+    renderMainGrid(filtrados);
 }
 
 function renderAdminList(list) {
@@ -690,8 +713,34 @@ function renderAdminList(list) {
     `).join('');
 }
 
+function tocarSomSucesso() {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota A5
+        oscillator.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.1); // Nota E6
+
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch (e) {
+        console.warn("Áudio não suportado ou bloqueado pelo navegador.");
+    }
+}
+
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => showToast("Copiado com sucesso!"));
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Copiado com sucesso!");
+        tocarSomSucesso();
+    });
 }
 
 function showToast(message, isError = false) {
@@ -804,13 +853,12 @@ function solicitarRecuperacao() {
     const email = document.getElementById('email').value;
     if (!email) return alert("Digite seu e-mail no campo acima!");
 
-    // A URL de redirecionamento deve apontar para a origem da aplicação.
-    // O erro "requested path is invalid" ocorre quando o Supabase tenta redirecionar para um caminho inexistente.
-    // Usamos window.location.origin para garantir que o link volte para a raiz do seu site.
-    const redirectUrl = window.location.origin;
+    // O erro "requested path is invalid" no Supabase Auth ocorre quando a URL de redirecionamento não está cadastrada na Vercel/Supabase Dashboard ou está sendo enviada de forma incompleta.
+    // Vamos garantir que a URL seja exatamente a raiz do seu site (sem barras extras no final se possível).
+    const siteUrl = window.location.origin;
 
     supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+        redirectTo: siteUrl,
     }).then(({error}) => {
         if (error) alert("Erro: " + error.message);
         else alert("E-mail de recuperação enviado! Verifique sua caixa de entrada e clique no link recebido.");
@@ -1107,6 +1155,7 @@ window.showScreen = showScreen;
 window.toggleTheme = toggleTheme;
 window.toggleScripts = toggleScripts;
 window.abrirNovaAba = abrirNovaAba;
+window.filtrarScripts = filtrarScripts;
 
 // Funções de Atendimento e Scripts
 window.processarDoc = processarDoc;
