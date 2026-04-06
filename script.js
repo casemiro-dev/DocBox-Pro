@@ -216,6 +216,16 @@ function atualizarTituloPagina() {
     document.title = nomeCliente ? nomeCliente : 'DocBox';
 }
 
+function preencherTitular() {
+    const input = document.getElementById('at-nome');
+    if (input) {
+        input.value = "Titular";
+        atualizarTituloPagina();
+        salvarDadosTemporarios();
+        showToast("Nome definido como Titular!");
+    }
+}
+
 function formatarTelefone(valor) {
     if (!valor) return "";
     let numeros = valor.replace(/\D/g, "");
@@ -521,12 +531,15 @@ function copiarRegistro() {
 
 // --- LÓGICA DE SCRIPTS (CRUD COMPLETO) ---
 async function loadScripts(forceRefresh = false) {
-    // Se já temos scripts e NÃO pedimos para forçar a atualização, sai da função (Economiza Banco)
+    // Cache de scripts para evitar chamadas repetidas ao banco
     if (allScripts.length > 0 && !forceRefresh) return;
 
-    if (!supabaseClient) return console.warn("Supabase não conectado.");
+    if (!supabaseClient) return;
 
-    const { data, error } = await supabaseClient.from('scripts').select('*');
+    // Busca otimizada: apenas os campos necessários
+    const { data, error } = await supabaseClient
+        .from('scripts')
+        .select('id, title, function_name, content, color');
     
     if (!error) {
         allScripts = data; 
@@ -734,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. RESTAURAR DADOS (Evita perda no F5)
     restaurarDadosTemporarios();
 
-   // 4. BUSCA AUTOMÁTICA (Corrigida para não travar)
+    // 4. BUSCA AUTOMÁTICA OTIMIZADA
     let debounceTimer;
 
     ['at-protocolo', 'at-doc'].forEach(id => {
@@ -743,16 +756,17 @@ document.addEventListener('DOMContentLoaded', () => {
             elemento.addEventListener('input', () => {
                 const val = elemento.value.trim();
                 
-                // Se o usuário apagar o campo, libera a trava IMEDIATAMENTE
                 if (val === "") {
                     ultimoProtocoloResgatado = "";
+                    return;
                 }
 
                 clearTimeout(debounceTimer);
-                if (val.length >= 5) {
+                // Só busca se tiver um tamanho mínimo razoável
+                if (val.length >= 6) {
                     debounceTimer = setTimeout(() => {
                         buscarAtendimentoSalvo();
-                    }, 350); // Aumentei levemente para 350ms para estabilidade
+                    }, 400); // Debounce levemente maior para reduzir carga no banco
                 }
             });
         }
@@ -790,9 +804,10 @@ function solicitarRecuperacao() {
     const email = document.getElementById('email').value;
     if (!email) return alert("Digite seu e-mail no campo acima!");
 
-    // A URL de redirecionamento deve apontar para a origem da aplicação
-    // O Supabase vai adicionar automaticamente os tokens de recuperação como fragmento (#)
-    const redirectUrl = window.location.origin + window.location.pathname;
+    // A URL de redirecionamento deve apontar para a origem da aplicação.
+    // O erro "requested path is invalid" ocorre quando o Supabase tenta redirecionar para um caminho inexistente.
+    // Usamos window.location.origin para garantir que o link volte para a raiz do seu site.
+    const redirectUrl = window.location.origin;
 
     supabaseClient.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
@@ -1095,6 +1110,7 @@ window.abrirNovaAba = abrirNovaAba;
 
 // Funções de Atendimento e Scripts
 window.processarDoc = processarDoc;
+window.preencherTitular = preencherTitular;
 window.transferirAtendimento = transferirAtendimento;
 window.copiarRegistro = copiarRegistro;
 window.saveAtendimento = saveAtendimento;
