@@ -136,7 +136,7 @@
                         <h3>Registro de Atendimento</h3>
 
                         <div class="input-row">
-                            <div class="input-container-relative" style="flex: 1.5;">
+                            <div class="input-container-relative">
                                 <input type="text" id="at-nome" class="input-with-icons" placeholder="Nome do Cliente">
                                 <div class="input-icon-group">
                                     <button type="button" class="btn-doc-icon" title="Preencher como Titular" onclick="preencherTitular()">
@@ -144,7 +144,9 @@
                                     </button>
                                 </div>
                             </div>
-                            <input type="text" id="at-protocolo" placeholder="Protocolo" style="flex: 1;">
+                            <div class="input-container-relative">
+                                <input type="text" id="at-protocolo" placeholder="Protocolo">
+                            </div>
                         </div>
 
                         <div class="input-row">
@@ -160,8 +162,7 @@
                                 </div>
                                 <div id="doc-status"></div>
                             </div>
-
-                            <div style="flex: 1;">
+                            <div class="input-container-relative">
                                 <input type="text" id="at-tel" placeholder="Telefone">
                             </div>
                         </div>
@@ -177,6 +178,12 @@
                 </div>
 
                 <div class="scripts-column">
+                    <div class="scripts-header">
+                        <div class="search-wrapper">
+                            <i data-lucide="search" class="search-icon"></i>
+                            <input type="text" id="script-search" placeholder="Buscar atalhos (ex: Suporte, Fibra...)" oninput="filtrarScripts()">
+                        </div>
+                    </div>
                     <div id="grid-display" class="compact-grid"></div>
                 </div>
             </div>
