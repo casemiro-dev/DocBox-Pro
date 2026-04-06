@@ -48,7 +48,7 @@
             
             <div class="auth-footer-links">
                 <button onclick="solicitarRecuperacao()" class="btn-link">Esqueci minha senha</button>
-                <button onclick="handleSignUp()" class="btn-link">Criar uma nova conta</button>
+                <button onclick="showScreen('signup-screen')" class="btn-link">Criar uma nova conta</button>
             </div>
 
             <p class="dev-credits">Developed by Casemiro Alves</p>
@@ -164,7 +164,6 @@
                         <div class="button-grid-atendimento">
                             <button class="btn-secondary" onclick="transferirAtendimento()">Transferir Matrix</button>
                             <button class="btn-secondary" onclick="copiarRegistro()">Copiar</button>
-                            <button class="btn-primary" onclick="saveAtendimento()">Salvar Atendimento</button>
                             <button class="btn-danger" onclick="limparCampos()">Apagar</button>
                         </div>
                     </div>
@@ -252,11 +251,88 @@
     <div class="auth-card">
         <h1>Nova Senha</h1>
         <p class="subtitle">Digite sua nova senha abaixo para recuperar o acesso</p>
+        
+        <div class="password-rules">
+            <p class="password-rules-title">Requisitos da senha:</p>
+            <ul class="password-rules-list">
+                <li>Mínimo de 6 caracteres</li>
+                <li>Exemplo: <code>Minha@123</code></li>
+                <li>Exemplo: <code>DocBox2024!</code></li>
+                <li>Combine letras, números e símbolos</li>
+            </ul>
+        </div>
+
         <div class="input-group">
-            <input type="password" id="new-password" placeholder="Nova senha">
+            <input type="password" id="new-password" placeholder="Nova senha (mín. 6 caracteres)">
+        </div>
+        <div class="input-group">
+            <input type="password" id="confirm-new-password" placeholder="Confirmar nova senha">
         </div>
         <button onclick="atualizarSenha()" class="btn-primary">Atualizar Senha</button>
         <button onclick="showScreen('auth-screen')" class="btn-link" style="margin-top: 10px;">Voltar ao Login</button>
+    </div>
+</section>
+
+<!-- ============================================================
+     TELA DE CADASTRO DEDICADA
+     ============================================================ -->
+<section id="signup-screen" class="screen hidden" style="background: var(--login-gradient); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px;">
+    <div class="login-wrapper">
+
+        <div class="login-illustration">
+            <div class="welcome-text">
+                <h2 class="main-title">Crie sua conta e comece a gerenciar atendimentos</h2>
+            </div>
+            <img src="404-error-lost-in-space-animate.svg" alt="Ilustração">
+        </div>
+
+        <div class="auth-card">
+            <h1>Criar Conta</h1>
+            <p class="subtitle" style="text-align:center; margin-bottom: 20px; font-size: 13px; opacity: 0.7;">Preencha os dados abaixo para criar sua conta no DocBox Pro</p>
+
+            <div class="input-group">
+                <input type="email" id="signup-email" placeholder="Seu e-mail">
+            </div>
+
+            <div class="input-group" style="position: relative;">
+                <input type="password" id="signup-password" placeholder="Crie uma senha" oninput="validarSenhaSignup()">
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="signup-confirm-password" placeholder="Confirmar senha" oninput="validarConfirmacaoSignup()">
+            </div>
+
+            <!-- Caixa de exemplos e requisitos de senha -->
+            <div class="password-rules">
+                <p class="password-rules-title">Requisitos da senha:</p>
+                <ul class="password-rules-list">
+                    <li id="rule-length" class="rule-item">Mínimo de 6 caracteres</li>
+                    <li id="rule-letter" class="rule-item">Pelo menos uma letra</li>
+                    <li id="rule-number" class="rule-item">Pelo menos um número</li>
+                </ul>
+                <p class="password-examples-title">Exemplos de senhas válidas:</p>
+                <div class="password-examples">
+                    <span class="password-example-tag">Minha@123</span>
+                    <span class="password-example-tag">DocBox2024!</span>
+                    <span class="password-example-tag">Suporte#99</span>
+                    <span class="password-example-tag">Atend3nto!</span>
+                </div>
+            </div>
+
+            <!-- Indicador de força da senha -->
+            <div class="password-strength-bar" id="signup-strength-bar">
+                <div class="strength-fill" id="signup-strength-fill"></div>
+            </div>
+            <p class="strength-label" id="signup-strength-label"></p>
+
+            <button onclick="handleSignUp()" class="btn-primary" style="margin-top: 15px;">Criar Conta</button>
+
+            <div class="auth-footer-links" style="justify-content: center; margin-top: 15px;">
+                <button onclick="showScreen('auth-screen')" class="btn-link">← Voltar ao Login</button>
+            </div>
+
+            <p class="dev-credits">Developed by Casemiro Alves</p>
+        </div>
     </div>
 </section>
 
