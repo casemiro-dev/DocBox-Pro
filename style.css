@@ -213,9 +213,17 @@ body {
 .btn-secondary {
     padding: 12px; background: var(--border); color: var(--text-bold);
     border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600;
-    transition: 0.2s;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
 }
-.btn-secondary:hover { background: var(--card); border-color: var(--accent); }
+.btn-secondary:hover { 
+    background: var(--card); 
+    border-color: var(--accent); 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(56, 139, 253, 0.1);
+}
+.btn-secondary:active { transform: translateY(0); }
 
 .btn-danger {
     padding: 12px; 
@@ -225,9 +233,15 @@ body {
     border-radius: 8px; 
     cursor: pointer; 
     font-weight: 600;
-    transition: 0.2s;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.btn-danger:hover { background-color: #6e3636 !important; color: #fff !important; }
+.btn-danger:hover { 
+    background-color: #6e3636 !important; 
+    color: #fff !important; 
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(248, 81, 73, 0.2);
+}
+.btn-danger:active { transform: translateY(0); }
 
 /* ==========================================================================
    SIDEBAR (NAVEGAÇÃO)
@@ -325,8 +339,10 @@ nav {
 }
 
 .atendimento-column { 
-    width: 650px; 
+    width: 100%;
+    max-width: 650px; 
     flex-shrink: 0; 
+    margin: 0 auto;
 }
 
 .scripts-column { 
@@ -633,9 +649,9 @@ input:focus, textarea:focus, select:focus {
    RESPONSIVIDADE (MOBILE)
    ========================================================================== */
 @media (max-width: 1100px) {
-    .workspace-layout { flex-direction: column; height: auto; padding: 15px; }
-    .atendimento-column, .scripts-column { width: 100%; max-width: 100%; }
-    .scripts-column { margin-top: 20px; padding-bottom: 40px; }
+    .workspace-layout { flex-direction: column; height: auto; padding: 15px; align-items: center; }
+    .atendimento-column { width: 100%; max-width: 650px; }
+    .scripts-column { width: 100%; margin-top: 20px; padding-bottom: 40px; }
     .compact-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
 
