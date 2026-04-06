@@ -136,7 +136,14 @@
                         <h3>Registro de Atendimento</h3>
 
                         <div class="input-row">
-                            <input type="text" id="at-nome" placeholder="Nome do Cliente" style="flex: 1.5;">
+                            <div class="input-container-relative" style="flex: 1.5;">
+                                <input type="text" id="at-nome" class="input-with-icons" placeholder="Nome do Cliente">
+                                <div class="input-icon-group">
+                                    <button type="button" class="btn-doc-icon" title="Preencher como Titular" onclick="preencherTitular()">
+                                        <i data-lucide="user-check"></i>
+                                    </button>
+                                </div>
+                            </div>
                             <input type="text" id="at-protocolo" placeholder="Protocolo" style="flex: 1;">
                         </div>
 
