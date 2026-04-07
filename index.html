@@ -78,6 +78,9 @@
         <button onclick="showScreen('history-screen')" class="nav-item">
             <i data-lucide="history"></i> <span>Histórico</span>
         </button>
+        <button onclick="showScreen('lgpd-screen')" class="nav-item">
+            <i data-lucide="shield-check"></i> <span>LGPD</span>
+        </button>
     </div>
 
     <div class="nav-section">
@@ -200,6 +203,60 @@
             </header>
             <div id="history-list" class="history-grid">
                 </div>
+        </div>
+    </section>
+
+    <section id="lgpd-screen" class="screen hidden">
+        <div class="admin-container">
+            <header class="admin-header">
+                <button onclick="showScreen('main-screen')" class="btn-back">
+                    <i data-lucide="chevron-left"></i> Voltar
+                </button>
+                <h2>Transferência de Dados (LGPD)</h2>
+            </header>
+
+            <div class="workspace-layout" style="justify-content: center; padding-top: 20px;">
+                <div class="atendimento-column">
+                    <div class="form-card">
+                        <h3>Dados do Cliente</h3>
+                        
+                        <div class="input-row">
+                            <div class="input-container-relative">
+                                <label style="display:block; margin-bottom:5px; font-size:12px; opacity:0.7;">Telefone 01</label>
+                                <input type="tel" id="lgpd-tel1" placeholder="(XX) XXXXX-XXXX">
+                            </div>
+                            <div class="input-container-relative">
+                                <label style="display:block; margin-bottom:5px; font-size:12px; opacity:0.7;">Telefone 02</label>
+                                <input type="tel" id="lgpd-tel2" placeholder="(XX) XXXXX-XXXX">
+                            </div>
+                        </div>
+
+                        <div class="input-row">
+                            <div class="input-container-relative">
+                                <label style="display:block; margin-bottom:5px; font-size:12px; opacity:0.7;">Telefone 03</label>
+                                <input type="tel" id="lgpd-tel3" placeholder="(XX) XXXXX-XXXX">
+                            </div>
+                            <div class="input-container-relative">
+                                <label style="display:block; margin-bottom:5px; font-size:12px; opacity:0.7;">Telefone 04</label>
+                                <input type="tel" id="lgpd-tel4" placeholder="(XX) XXXXX-XXXX">
+                            </div>
+                        </div>
+
+                        <div class="input-row">
+                            <div class="input-container-relative">
+                                <label style="display:block; margin-bottom:5px; font-size:12px; opacity:0.7;">E-mail</label>
+                                <input type="email" id="lgpd-email" placeholder="exemplo@email.com">
+                            </div>
+                        </div>
+
+                        <div class="button-grid-atendimento" style="margin-top: 20px;">
+                            <button class="btn-secondary" onclick="transferirLGPD('desk')">Transferir Desk</button>
+                            <button class="btn-secondary" onclick="copiarLGPD('desk')">Copiar Desk</button>
+                            <button class="btn-danger" onclick="limparLGPD()">Apagar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
