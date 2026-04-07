@@ -352,12 +352,12 @@ nav {
 }
 
 .scripts-header {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     position: sticky;
     top: 0;
     z-index: 10;
-    background: var(--bg);
-    padding-bottom: 10px;
+    background: transparent;
+    padding-bottom: 5px;
 }
 
 .search-wrapper {
@@ -378,14 +378,15 @@ nav {
 
 #script-search {
     width: 100%;
-    padding: 14px 14px 14px 45px;
-    background: var(--card);
+    padding: 12px 14px 12px 45px;
+    background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 10px;
     color: var(--text-bold);
     font-size: 14px;
     outline: none;
     transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 #script-search:focus {
