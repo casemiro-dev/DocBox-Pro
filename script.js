@@ -66,7 +66,7 @@ function showScreen(screenId) {
         target.style.display = 'flex';
     }
     
-    if (screenId !== 'auth-screen' && screenId !== 'reset-password-screen' && screenId !== 'signup-screen') {
+    if (['main-screen', 'admin-screen', 'lgpd-screen', 'history-screen'].includes(screenId)) {
         localStorage.setItem('docbox_last_screen', screenId);
     }
     
@@ -189,8 +189,23 @@ async function checkUser() {
             const userDisplay = document.getElementById('user-display');
             if (userDisplay) userDisplay.innerText = user.email;
 
+            // --- CARREGAR WALLPAPER DO SUPABASE ---
+            supabaseClient
+                .from('profiles')
+                .select('wallpaper_url')
+                .eq('id', user.id)
+                .single()
+                .then(({ data }) => {
+                    if (data && data.wallpaper_url) {
+                        document.body.style.setProperty('--custom-bg', `url('${data.wallpaper_url}')`);
+                        localStorage.setItem('docbox_wallpaper', data.wallpaper_url);
+                        const bgInput = document.getElementById('bg-url');
+                        if (bgInput) bgInput.value = data.wallpaper_url;
+                    }
+                });
+
             let lastScreen = localStorage.getItem('docbox_last_screen');
-            const validScreens = ['main-screen', 'admin-screen']; 
+            const validScreens = ['main-screen', 'admin-screen', 'lgpd-screen', 'history-screen']; 
             
             if (!lastScreen || !validScreens.includes(lastScreen)) {
                 lastScreen = 'main-screen';
@@ -916,22 +931,121 @@ async function atualizarSenha() {
     }
 }
 
-function aplicarWallpaper() {
-    const url = document.getElementById('bg-url').value;
-    if (url) {
-        localStorage.setItem('docbox_wallpaper', url);
-        document.body.style.setProperty('--custom-bg', `url('${url}')`);
-        showToast("Wallpaper aplicado!");
-    } else {
-        showToast("Insira uma URL válida", true);
+async function aplicarWallpaper() {
+    const url = document.getElementById('bg-url').value.trim();
+    if (!url) return showToast("Insira uma URL válida", true);
+
+    localStorage.setItem('docbox_wallpaper', url);
+    document.body.style.setProperty('--custom-bg', `url('${url}')`);
+
+    // Salvar no Supabase para persistência entre dispositivos
+    if (currentUser && supabaseClient) {
+        try {
+            await supabaseClient
+                .from('profiles')
+                .upsert({ 
+                    id: currentUser.id, 
+                    wallpaper_url: url,
+                    updated_at: new Date()
+                });
+        } catch (e) { console.error("Erro ao salvar no Supabase:", e); }
     }
+    showToast("Wallpaper aplicado e salvo na conta!");
 }
 
-function removerWallpaper() {
+async function removerWallpaper() {
     localStorage.removeItem('docbox_wallpaper');
     document.body.style.setProperty('--custom-bg', 'none');
     document.getElementById('bg-url').value = '';
+
+    if (currentUser && supabaseClient) {
+        try {
+            await supabaseClient
+                .from('profiles')
+                .upsert({ 
+                    id: currentUser.id, 
+                    wallpaper_url: null,
+                    updated_at: new Date()
+                });
+        } catch (e) { console.error("Erro ao remover do Supabase:", e); }
+    }
     showToast("Wallpaper removido");
+}
+
+// --- LÓGICA LGPD ---
+
+function limparLGPD() {
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`lgpd-tel${i}`);
+        if (el) el.value = '';
+    }
+    const emailEl = document.getElementById('lgpd-email');
+    if (emailEl) emailEl.value = '';
+    showToast("Campos LGPD limpos!");
+}
+
+async function transferirLGPD(tipo) {
+    try {
+        const texto = await navigator.clipboard.readText();
+        
+        // Identificação simplificada baseada no seu script.js original
+        const isDesk = texto.includes("Usuário:") && texto.includes("Cadastro Geral");
+        const isFaster = texto.includes("Confirme o telefone com o cliente:");
+
+        if (tipo === 'desk' && !isDesk) return alert("Os dados na área de transferência não parecem ser do tipo Desk.");
+        if (tipo === 'faster' && !isFaster) return alert("Os dados na área de transferência não parecem ser do tipo Faster.");
+
+        limparLGPD();
+
+        // Extração de e-mail
+        const emailMatch = texto.match(/[\w.-]+@[\w.-]+\.\w+/);
+        if (emailMatch) document.getElementById('lgpd-email').value = emailMatch[0];
+
+        // Extração de telefones (Lógica simplificada do seu script)
+        const diretos = texto.match(/\b(\d{2})(\d{8,9})\b/g) || [];
+        const telefones = [...new Set(diretos)].slice(0, 4);
+
+        telefones.forEach((num, i) => {
+            const campo = document.getElementById(`lgpd-tel${i + 1}`);
+            if (campo) campo.value = num;
+        });
+
+        showToast("Dados LGPD transferidos!");
+        tocarSomSucesso();
+    } catch (err) {
+        showToast("Erro ao ler área de transferência", true);
+    }
+}
+
+function copiarLGPD(tipo) {
+    const telefones = [];
+    for (let i = 1; i <= 4; i++) {
+        const valor = document.getElementById(`lgpd-tel${i}`).value.trim();
+        if (valor.length >= 10) {
+            const ddd = valor.slice(0, 2);
+            const numero = valor.slice(2);
+            const ultimos4 = numero.slice(-4);
+            telefones.push(`(${ddd}) X XXXX-${ultimos4}`);
+        }
+    }
+
+    const email = document.getElementById('lgpd-email').value.trim();
+    const telFormatados = telefones.join(", ");
+    
+    let mensagem = `No seu cadastro constam as seguintes informações para contato: ${telFormatados}`;
+
+    if (email) {
+        const [usuario, dominio] = email.split("@");
+        const emailFormatado = usuario.slice(0, 2) + "********@" + dominio;
+        mensagem += ` e ${emailFormatado}. Deseja remover ou adicionar algum contato?`;
+    } else {
+        mensagem += `. Deseja remover ou adicionar algum contato?\nIdentificamos que não há e-mail cadastrado em sistema, deseja adicionar algum?`;
+    }
+
+    navigator.clipboard.writeText(mensagem).then(() => {
+        showToast("Mensagem LGPD copiada!");
+        tocarSomSucesso();
+    });
 }
 
 function salvarDadosTemporarios() {
@@ -1164,6 +1278,11 @@ window.transferirAtendimento = transferirAtendimento;
 window.copiarRegistro = copiarRegistro;
 window.saveAtendimento = saveAtendimento;
 window.limparCampos = limparCampos;
+
+// Funções LGPD
+window.limparLGPD = limparLGPD;
+window.transferirLGPD = transferirLGPD;
+window.copiarLGPD = copiarLGPD;
 window.copyToClipboard = copyToClipboard; 
 
 // Funções do Painel Admin
