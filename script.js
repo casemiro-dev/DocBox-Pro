@@ -1310,7 +1310,7 @@ window.renderHistorico = function() {
     }
 
     listaContainer.innerHTML = historico.map(at => `
-        <div class="history-card" style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative;">
+        <div class="history-card" style="border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; position: relative;">
             <button onclick="excluirItemHistorico(${at.id})" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #f85149; cursor: pointer; font-size: 16px; font-weight: bold; padding: 5px;">
                 &times;
             </button>
