@@ -1368,3 +1368,29 @@ window.reaproveitarAtendimento = function(id) {
         if (typeof atualizarTituloPagina === 'function') atualizarTituloPagina();
     }
 };
+
+// --- TOGGLE DE VISIBILIDADE DE SENHA ---
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    const button = event.target.closest('.btn-toggle-password');
+    
+    if (!input || !button) return;
+    
+    // Alterna entre password e text
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    
+    // Adiciona animacao ao botao
+    button.classList.add('active');
+    setTimeout(() => {
+        button.classList.remove('active');
+    }, 400);
+    
+    // Alterna o icone entre eye e eye-off
+    const icon = button.querySelector('i');
+    if (icon) {
+        const currentIcon = icon.getAttribute('data-lucide');
+        icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+        lucide.createIcons();
+    }
+}
