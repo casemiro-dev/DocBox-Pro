@@ -1125,3 +1125,65 @@ input:focus, textarea:focus, select:focus {
     max-height: 60px;
     overflow-y: auto;
 }
+
+
+/* ==========================================================================
+   BOTÃO DE TOGGLE DE SENHA (OLHINHO ANIMADO)
+   ========================================================================== */
+.password-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-group input {
+    padding-right: 45px;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10;
+}
+
+.btn-toggle-password:hover {
+    color: var(--accent);
+    background: rgba(56, 139, 253, 0.1);
+    transform: translateY(-50%) scale(1.15);
+}
+
+.btn-toggle-password:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.btn-toggle-password i {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Animacao de rotacao suave para o icone */
+@keyframes eyeBlink {
+    0% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scaleY(0.3); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
+.btn-toggle-password.active {
+    color: var(--accent);
+    animation: eyeBlink 0.4s ease-in-out;
+}
