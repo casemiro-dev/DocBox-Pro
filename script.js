@@ -1370,27 +1370,29 @@ window.reaproveitarAtendimento = function(id) {
 };
 
 // --- TOGGLE DE VISIBILIDADE DE SENHA ---
-function togglePasswordVisibility(inputId) {
+window.togglePasswordVisibility = function(inputId) {
     const input = document.getElementById(inputId);
-    const button = event.target.closest('.btn-toggle-password');
+    // Busca o botão de forma segura, seja via event ou pelo pai do input
+    const button = (window.event && window.event.currentTarget) || document.querySelector(`#${inputId} + .btn-toggle-password`);
     
-    if (!input || !button) return;
+    if (!input) return;
     
     // Alterna entre password e text
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
+    const isCurrentlyPassword = input.getAttribute('type') === 'password';
+    input.setAttribute('type', isCurrentlyPassword ? 'text' : 'password');
     
-    // Adiciona animacao ao botao
-    button.classList.add('active');
-    setTimeout(() => {
-        button.classList.remove('active');
-    }, 400);
-    
-    // Alterna o icone entre eye e eye-off
-    const icon = button.querySelector('i');
-    if (icon) {
-        const currentIcon = icon.getAttribute('data-lucide');
-        icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
-        lucide.createIcons();
+    if (button) {
+        // Adiciona animação ao botão
+        button.classList.add('active');
+        setTimeout(() => button.classList.remove('active'), 300);
+        
+        // Alterna o ícone: se virou texto (visível), mostra "eye". Se virou password (escondido), mostra "eye-off".
+        const icon = button.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', isCurrentlyPassword ? 'eye' : 'eye-off');
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
     }
-}
+};
