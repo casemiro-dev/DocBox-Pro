@@ -584,10 +584,12 @@ async function loadScripts(forceRefresh = false) {
 function editarScript(id) {
     const script = allScripts.find(s => s.id == id);
     if (script) {
+        const sc = script.shortcut || "";
         document.getElementById('edit-script-id').value = script.id;
         document.getElementById('script-title').value = script.title || "";
         document.getElementById('script-function').value = script.function_name || "";
-        document.getElementById('script-shortcut').value = script.shortcut || "";
+        document.getElementById('script-shortcut-prefix').value = sc.length > 0 ? sc[0] : "";
+        document.getElementById('script-shortcut-name').value = sc.length > 1 ? sc.slice(1) : "";
         document.getElementById('script-content').value = script.content || "";
         document.getElementById('script-color').value = script.color || "#ff0000";
         
@@ -602,7 +604,9 @@ async function saveScript() {
     const idEdicao = document.getElementById('edit-script-id').value;
     const title = document.getElementById('script-title').value;
     const func = document.getElementById('script-function').value;
-    const shortcut = document.getElementById('script-shortcut').value.trim();
+    const shortcutPrefix = document.getElementById('script-shortcut-prefix').value.trim();
+    const shortcutName = document.getElementById('script-shortcut-name').value.trim();
+    const shortcut = shortcutPrefix && shortcutName ? shortcutPrefix + shortcutName : null;
     const content = document.getElementById('script-content').value;
     const color = document.getElementById('script-color').value;
 
@@ -667,7 +671,8 @@ function resetFormAdmin() {
     // Limpa os textos
     document.getElementById('script-title').value = '';
     document.getElementById('script-function').value = '';
-    document.getElementById('script-shortcut').value = '';
+    document.getElementById('script-shortcut-prefix').value = '';
+    document.getElementById('script-shortcut-name').value = '';
     document.getElementById('script-content').value = '';
     document.getElementById('script-color').value = '#ff0000';
     
@@ -935,40 +940,40 @@ function detectarAtalho(textarea) {
     const pos = textarea.selectionStart;
     const texto = textarea.value;
     const textoAteCursor = texto.slice(0, pos);
-    const textoDepois = texto.slice(pos);
 
-    // Encontra o último # que não esteja no meio de uma palavra
-    const antes = textoAteCursor;
-    const hashIndex = antes.lastIndexOf('#');
-
-    if (hashIndex === -1) {
+    // Encontra o último caractere especial (não alfanumérico) no texto antes do cursor
+    const matchEspecial = textoAteCursor.match(/[\W_](?=[\w_]*$)/);
+    if (!matchEspecial) {
         esconderDropdown();
         return;
     }
 
-    // Verifica se o # está no início de uma palavra (ou é o primeiro char da linha)
-    if (hashIndex > 0) {
-        const charAntes = antes[hashIndex - 1];
+    const prefixIndex = matchEspecial.index;
+    const prefixChar = textoAteCursor[prefixIndex];
+
+    // Verifica se está no início de uma palavra
+    if (prefixIndex > 0) {
+        const charAntes = textoAteCursor[prefixIndex - 1];
         if (charAntes !== ' ' && charAntes !== '\n' && charAntes !== '\t' && charAntes !== '(' && charAntes !== '[') {
             esconderDropdown();
             return;
         }
     }
 
-    // Extrai a palavra parcial após o #
-    const depoisDoHash = antes.slice(hashIndex + 1);
-    const matchPalavra = depoisDoHash.match(/^[a-zA-Z0-9_]*/);
-    const parcial = matchPalavra ? matchPalavra[0].toLowerCase() : '';
+    // Extrai a palavra parcial após o prefixo (incluindo ele)
+    const depoisDoPrefix = textoAteCursor.slice(prefixIndex);
+    const matchPalavra = depoisDoPrefix.match(/^[\W_]?[a-zA-Z0-9_]*/);
+    const textoDigitado = matchPalavra ? matchPalavra[0].toLowerCase() : '';
 
-    if (parcial.length === 0) {
+    if (textoDigitado.length < 2) {
         esconderDropdown();
         return;
     }
 
-    // Filtra scripts cujo shortcut (sem #) comece com a parcial
+    // Filtra scripts cujo shortcut (ex: #fate, %fatura) comece com o que foi digitado
     const resultados = allScripts.filter(s => {
-        const atalho = (s.shortcut || '').replace(/^#/, '').toLowerCase();
-        return atalho.startsWith(parcial);
+        const atalho = (s.shortcut || '').toLowerCase();
+        return atalho.startsWith(textoDigitado);
     });
 
     if (resultados.length === 0) {
@@ -978,7 +983,7 @@ function detectarAtalho(textarea) {
 
     dropdownState.resultados = resultados;
     dropdownState.selectedIndex = 0;
-    dropdownState.inicioAtalho = hashIndex;
+    dropdownState.inicioAtalho = prefixIndex;
     dropdownState.textoAteCursor = textoAteCursor;
 
     mostrarSugestoes(resultados, textarea, pos);
