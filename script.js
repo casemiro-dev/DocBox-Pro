@@ -557,7 +557,7 @@ async function loadScripts(forceRefresh = false) {
     // Busca otimizada: apenas os campos necessários
     const { data, error } = await supabaseClient
         .from('scripts')
-        .select('id, title, function_name, content, color');
+        .select('id, title, function_name, shortcut, content, color');
     
     if (!error) {
         allScripts = data; 
@@ -584,9 +584,12 @@ async function loadScripts(forceRefresh = false) {
 function editarScript(id) {
     const script = allScripts.find(s => s.id == id);
     if (script) {
+        const sc = script.shortcut || "";
         document.getElementById('edit-script-id').value = script.id;
         document.getElementById('script-title').value = script.title || "";
         document.getElementById('script-function').value = script.function_name || "";
+        document.getElementById('script-shortcut-prefix').value = sc.length > 0 ? sc[0] : "";
+        document.getElementById('script-shortcut-name').value = sc.length > 1 ? sc.slice(1) : "";
         document.getElementById('script-content').value = script.content || "";
         document.getElementById('script-color').value = script.color || "#ff0000";
         
@@ -601,6 +604,9 @@ async function saveScript() {
     const idEdicao = document.getElementById('edit-script-id').value;
     const title = document.getElementById('script-title').value;
     const func = document.getElementById('script-function').value;
+    const shortcutPrefix = document.getElementById('script-shortcut-prefix').value.trim();
+    const shortcutName = document.getElementById('script-shortcut-name').value.trim();
+    const shortcut = shortcutPrefix && shortcutName ? shortcutPrefix + shortcutName : null;
     const content = document.getElementById('script-content').value;
     const color = document.getElementById('script-color').value;
 
@@ -632,6 +638,7 @@ async function saveScript() {
     const scriptData = {
         title: title || func || "Sem título",
         function_name: func || "Geral",
+        shortcut: shortcut || null,
         content: content,
         color: color
     };
@@ -664,6 +671,8 @@ function resetFormAdmin() {
     // Limpa os textos
     document.getElementById('script-title').value = '';
     document.getElementById('script-function').value = '';
+    document.getElementById('script-shortcut-prefix').value = '';
+    document.getElementById('script-shortcut-name').value = '';
     document.getElementById('script-content').value = '';
     document.getElementById('script-color').value = '#ff0000';
     
@@ -686,15 +695,17 @@ function renderMainGrid(list) {
         return;
     }
 
-    grid.innerHTML = list.map(s => `
-        <div class="script-card" style="border-left-color: ${s.color}" onclick="copyToClipboard(\`${s.content}\`)">
+    grid.innerHTML = list.map(s => {
+        const escapedContent = s.content.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        return `
+        <div class="script-card" style="border-left-color: ${s.color}" onclick="copyToClipboard(\`${escapedContent}\`)">
             <div>
-                <h3>${s.title}</h3>
+                <h3>${s.title}${s.shortcut ? ` <span class="shortcut-badge">${s.shortcut}</span>` : ''}</h3>
                 <p>${s.content}</p>
             </div>
             <small style="color: var(--accent); font-weight: bold; margin-top: 8px;">${s.function_name}</small>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function filtrarScripts() {
@@ -704,8 +715,9 @@ function filtrarScripts() {
         const titulo = (s.title || "").toLowerCase();
         const categoria = (s.function_name || "").toLowerCase();
         const conteudo = (s.content || "").toLowerCase();
+        const atalho = (s.shortcut || "").toLowerCase();
         
-        return titulo.includes(termo) || categoria.includes(termo) || conteudo.includes(termo);
+        return titulo.includes(termo) || categoria.includes(termo) || conteudo.includes(termo) || atalho.includes(termo);
     });
 
     renderMainGrid(filtrados);
@@ -718,7 +730,7 @@ function renderAdminList(list) {
         <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid var(--border)">
             <div style="display:flex; align-items:center; gap:10px;">
                 <div style="width:12px; height:12px; border-radius:50%; background:${s.color}"></div>
-                <span style="font-size: 14px; color: var(--text-bold)">${s.title}</span>
+                <span style="font-size: 14px; color: var(--text-bold)">${s.title}${s.shortcut ? ` <span style="font-family:monospace; font-size:11px; opacity:0.5; margin-left:6px;">${s.shortcut}</span>` : ''}</span>
             </div>
             <div style="display:flex; gap:10px;">
                 <button onclick="editarScript(${s.id})" style="color:var(--accent); background:none; border:none; cursor:pointer; font-size: 12px; font-weight: bold;">Editar</button>
@@ -860,9 +872,245 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 7. MONITORAMENTO DE ATALHOS NO RELATO
+    iniciarMonitoramentoAtalhos();
+
     // Inicializa ícones do Lucide
     lucide.createIcons();
 });
+
+// --- DROPDOWN DE ATALHOS NO RELATO ---
+let dropdownState = {
+    visible: false,
+    selectedIndex: 0,
+    resultados: [],
+    inicioAtalho: 0,
+    textoAteCursor: ''
+};
+
+function iniciarMonitoramentoAtalhos() {
+    const textarea = document.getElementById('at-relato');
+    if (!textarea) return;
+
+    let debounceDropdown;
+
+    textarea.addEventListener('input', () => {
+        clearTimeout(debounceDropdown);
+        debounceDropdown = setTimeout(() => detectarAtalho(textarea), 100);
+    });
+
+    textarea.addEventListener('keydown', (e) => {
+        if (!dropdownState.visible) return;
+
+        const dropdown = document.getElementById('shortcut-dropdown');
+        const items = dropdown?.querySelectorAll('.shortcut-dropdown-item');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            dropdownState.selectedIndex = Math.min(dropdownState.selectedIndex + 1, items.length - 1);
+            atualizarItemAtivo(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            dropdownState.selectedIndex = Math.max(dropdownState.selectedIndex - 1, 0);
+            atualizarItemAtivo(items);
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            if (items && items[dropdownState.selectedIndex]) {
+                e.preventDefault();
+                const index = parseInt(items[dropdownState.selectedIndex].dataset.index);
+                const script = dropdownState.resultados[index];
+                if (script) inserirAtalhoDoDropdown(script, textarea);
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            esconderDropdown();
+        }
+    });
+
+    textarea.addEventListener('blur', () => {
+        setTimeout(esconderDropdown, 200);
+    });
+}
+
+function detectarAtalho(textarea) {
+    if (allScripts.length === 0) {
+        esconderDropdown();
+        return;
+    }
+
+    const pos = textarea.selectionStart;
+    const texto = textarea.value;
+    const textoAteCursor = texto.slice(0, pos);
+
+    // Encontra o último caractere especial (não alfanumérico) no texto antes do cursor
+    const matchEspecial = textoAteCursor.match(/[\W_](?=[\w_]*$)/);
+    if (!matchEspecial) {
+        esconderDropdown();
+        return;
+    }
+
+    const prefixIndex = matchEspecial.index;
+    const prefixChar = textoAteCursor[prefixIndex];
+
+    // Verifica se está no início de uma palavra
+    if (prefixIndex > 0) {
+        const charAntes = textoAteCursor[prefixIndex - 1];
+        if (charAntes !== ' ' && charAntes !== '\n' && charAntes !== '\t' && charAntes !== '(' && charAntes !== '[') {
+            esconderDropdown();
+            return;
+        }
+    }
+
+    // Extrai a palavra parcial após o prefixo (incluindo ele)
+    const depoisDoPrefix = textoAteCursor.slice(prefixIndex);
+    const matchPalavra = depoisDoPrefix.match(/^[\W_]?[a-zA-Z0-9_]*/);
+    const textoDigitado = matchPalavra ? matchPalavra[0].toLowerCase() : '';
+
+    if (textoDigitado.length < 2) {
+        esconderDropdown();
+        return;
+    }
+
+    // Filtra scripts cujo shortcut (ex: #fate, %fatura) comece com o que foi digitado
+    const resultados = allScripts.filter(s => {
+        const atalho = (s.shortcut || '').toLowerCase();
+        return atalho.startsWith(textoDigitado);
+    });
+
+    if (resultados.length === 0) {
+        esconderDropdown();
+        return;
+    }
+
+    dropdownState.resultados = resultados;
+    dropdownState.selectedIndex = 0;
+    dropdownState.inicioAtalho = prefixIndex;
+    dropdownState.textoAteCursor = textoAteCursor;
+
+    mostrarSugestoes(resultados, textarea, pos);
+}
+
+function mostrarSugestoes(resultados, textarea, cursorPos) {
+    const dropdown = document.getElementById('shortcut-dropdown');
+    if (!dropdown) return;
+
+    dropdown.innerHTML = resultados.map((s, i) => `
+        <div class="shortcut-dropdown-item ${i === 0 ? 'active' : ''}" data-index="${i}" data-id="${s.id}">
+            <span class="s-dropdown-shortcut">${s.shortcut || '#' + (s.function_name || '').toLowerCase().replace(/\s+/g, '')}</span>
+            <span class="s-dropdown-title">${s.title}</span>
+        </div>
+    `).join('');
+
+    // Posiciona o dropdown abaixo da linha do cursor
+    const pos = calcularPosicaoCursor(textarea);
+    dropdown.style.left = pos.left + 'px';
+    dropdown.style.top = (pos.top + 24) + 'px';
+    dropdown.classList.remove('hidden');
+
+    dropdownState.visible = true;
+
+    // Evento de clique nos itens
+    dropdown.querySelectorAll('.shortcut-dropdown-item').forEach(item => {
+        item.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const index = parseInt(item.dataset.index);
+            const script = resultados[index];
+            if (script) inserirAtalhoDoDropdown(script, textarea);
+        });
+    });
+}
+
+function inserirAtalhoDoDropdown(script, textarea) {
+    const texto = textarea.value;
+    const pos = textarea.selectionStart;
+    const textoAteCursor = texto.slice(0, dropdownState.inicioAtalho);
+
+    // Pega o conteúdo do script e prepara para inserção
+    const conteudo = script.content || '';
+    const atalho = script.shortcut || '#' + (script.function_name || '').toLowerCase().replace(/\s+/g, '');
+
+    // Remove o #parcial e insere o atalho + conteúdo
+    const depoisDoCursor = texto.slice(pos);
+    const novoTexto = textoAteCursor + atalho + ' ' + conteudo + depoisDoCursor;
+
+    textarea.value = novoTexto;
+
+    // Posiciona o cursor no final do conteúdo inserido
+    const novoCursor = textoAteCursor.length + atalho.length + 1 + conteudo.length;
+    textarea.selectionStart = textarea.selectionEnd = novoCursor;
+
+    esconderDropdown();
+    textarea.focus();
+    salvarDadosTemporarios();
+    lucide.createIcons();
+}
+
+function esconderDropdown() {
+    const dropdown = document.getElementById('shortcut-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+    dropdownState.visible = false;
+    dropdownState.resultados = [];
+    dropdownState.selectedIndex = 0;
+}
+
+function atualizarItemAtivo(items) {
+    if (!items) return;
+    items.forEach((item, i) => {
+        item.classList.toggle('active', i === dropdownState.selectedIndex);
+    });
+    items[dropdownState.selectedIndex]?.scrollIntoView({ block: 'nearest' });
+}
+
+function calcularPosicaoCursor(textarea) {
+    // Cria um espelho para medir a posição do texto até o cursor
+    const pos = textarea.selectionStart;
+    const texto = textarea.value;
+    const textoAteCursor = texto.slice(0, pos);
+
+    // Pega as últimas linhas para medir
+    const linhas = textoAteCursor.split('\n');
+    const linhaAtual = linhas.length;
+
+    // Mede usando um span temporário
+    const mirror = document.createElement('div');
+    const estilo = window.getComputedStyle(textarea);
+    mirror.style.cssText = `
+        position: fixed; top: -9999px; left: -9999px;
+        width: ${textarea.offsetWidth}px;
+        font-size: ${estilo.fontSize};
+        font-family: ${estilo.fontFamily};
+        line-height: ${estilo.lineHeight};
+        padding: ${estilo.padding};
+        letter-spacing: ${estilo.letterSpacing};
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        visibility: hidden;
+    `;
+
+    // Texto até a última linha (pra medir altura)
+    if (linhaAtual > 1) {
+        mirror.textContent = textoAteCursor.split('\n').slice(0, -1).join('\n') + '\n';
+    } else {
+        mirror.textContent = '';
+    }
+
+    // Um span na última linha pra medir a largura
+    const span = document.createElement('span');
+    span.textContent = linhas[linhaAtual - 1] || '';
+    mirror.appendChild(span);
+    document.body.appendChild(mirror);
+
+    const rect = textarea.getBoundingClientRect();
+    const spanRect = span.getBoundingClientRect();
+    const scrollTop = textarea.scrollTop;
+
+    const left = rect.left + spanRect.width + parseInt(estilo.paddingLeft) + 2;
+    const top = rect.top + spanRect.top - mirror.getBoundingClientRect().top + parseInt(estilo.paddingTop) - scrollTop + 4;
+
+    document.body.removeChild(mirror);
+
+    return { left, top };
+}
+// --- FIM DO DROPDOWN DE ATALHOS ---
 
 function solicitarRecuperacao() {
     const email = document.getElementById('email').value;
