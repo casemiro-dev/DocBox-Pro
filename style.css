@@ -567,7 +567,7 @@ input:focus, textarea:focus, select:focus {
 .script-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
 
 .script-card h3 { 
-    font-size: 14px; 
+    font-size: 16px; 
     color: var(--text-bold); 
     margin-bottom: 5px;
     white-space: nowrap;
@@ -576,8 +576,8 @@ input:focus, textarea:focus, select:focus {
 }
 
 .script-card p { 
-    font-size: 12px; 
-    line-height: 1.4; 
+    font-size: 13px; 
+    line-height: 1.5; 
     color: var(--text);
     display: -webkit-box;
     -webkit-line-clamp: 3;
