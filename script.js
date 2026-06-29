@@ -1028,14 +1028,14 @@ function inserirAtalhoDoDropdown(script, textarea) {
     const conteudo = script.content || '';
     const atalho = script.shortcut || '#' + (script.function_name || '').toLowerCase().replace(/\s+/g, '');
 
-    // Remove o #parcial e insere o atalho + conteúdo
+    // Remove o atalho digitado e insere apenas o conteúdo
     const depoisDoCursor = texto.slice(pos);
-    const novoTexto = textoAteCursor + atalho + ' ' + conteudo + depoisDoCursor;
+    const novoTexto = textoAteCursor + conteudo + depoisDoCursor;
 
     textarea.value = novoTexto;
 
     // Posiciona o cursor no final do conteúdo inserido
-    const novoCursor = textoAteCursor.length + atalho.length + 1 + conteudo.length;
+    const novoCursor = textoAteCursor.length + conteudo.length;
     textarea.selectionStart = textarea.selectionEnd = novoCursor;
 
     esconderDropdown();
