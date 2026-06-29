@@ -730,6 +730,22 @@ input:focus, textarea:focus, select:focus {
     vertical-align: middle;
 }
 
+.shortcut-prefix-group {
+    display: flex;
+    gap: 8px;
+    align-items: start;
+    margin-bottom: 12px;
+}
+.shortcut-prefix-group input:first-child {
+    width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+    font-weight: 700;
+}
+.shortcut-prefix-group input:last-child {
+    flex: 1;
+}
+
 /* ==========================================================================
    UTILITÁRIOS (SCROLL, TOAST, LOADING)
    ========================================================================== */
