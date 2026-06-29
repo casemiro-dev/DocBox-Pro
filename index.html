@@ -174,7 +174,8 @@
                             </div>
                         </div>
 
-                        <textarea id="at-relato" placeholder="Relato do atendimento..."></textarea>
+                        <textarea id="at-relato" placeholder="Relato do atendimento... (digite #, %, $, . para atalhos)"></textarea>
+                        <div id="shortcut-dropdown" class="shortcut-dropdown hidden"></div>
                         
                         <div class="button-grid-atendimento">
                             <button class="btn-secondary" onclick="transferirAtendimento()">Transferir Matrix</button>
@@ -280,6 +281,11 @@
                 <input type="hidden" id="edit-script-id" value="">
                 <input type="text" id="script-title" placeholder="Título (Opcional)">
                 <input type="text" id="script-function" placeholder="Categoria (Ex: Suporte)">
+                <div style="display: flex; gap: 8px; align-items: start;">
+                    <input type="text" id="script-shortcut-prefix" placeholder="#" style="width: 60px; text-align: center; flex-shrink: 0;">
+                    <input type="text" id="script-shortcut-name" placeholder="fate" style="flex: 1;">
+                </div>
+                <p style="font-size: 11px; opacity: 0.5; margin: -8px 0 12px 0;">Símbolo + nome do atalho. Ex: <code>#fate</code>, <code>%fatura</code>, <code>.cancel</code>, <code>$help</code></p>
                 <textarea id="script-content" rows="6" placeholder="Texto para copiar..."></textarea>
 
                 <div class="color-row" style="margin-bottom: 15px;">
