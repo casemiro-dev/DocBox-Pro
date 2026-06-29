@@ -667,6 +667,86 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ==========================================================================
+   DROPDOWN DE ATALHOS
+   ========================================================================== */
+.shortcut-dropdown {
+    position: fixed;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 9999;
+    min-width: 220px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    padding: 4px;
+}
+.shortcut-dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    border-radius: 6px;
+    transition: 0.1s;
+    color: var(--text-bold);
+    gap: 12px;
+}
+.shortcut-dropdown-item:hover,
+.shortcut-dropdown-item.active {
+    background: var(--accent);
+    color: white;
+}
+.shortcut-dropdown-item .s-dropdown-shortcut {
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+}
+.shortcut-dropdown-item .s-dropdown-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    opacity: 0.7;
+}
+.shortcut-dropdown-item:hover .s-dropdown-title,
+.shortcut-dropdown-item.active .s-dropdown-title {
+    opacity: 0.9;
+}
+
+.shortcut-badge {
+    display: inline-block;
+    background: rgba(56, 139, 253, 0.15);
+    color: var(--accent);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: monospace;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.shortcut-prefix-group {
+    display: flex;
+    gap: 8px;
+    align-items: start;
+    margin-bottom: 12px;
+}
+.shortcut-prefix-group input:first-child {
+    width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+    font-weight: 700;
+}
+.shortcut-prefix-group input:last-child {
+    flex: 1;
+}
+
+/* ==========================================================================
    UTILITÁRIOS (SCROLL, TOAST, LOADING)
    ========================================================================== */
 ::-webkit-scrollbar { width: 6px; }
