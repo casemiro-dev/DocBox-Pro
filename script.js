@@ -351,7 +351,7 @@ async function transferirAtendimento() {
         const texto = await navigator.clipboard.readText();
         
         const nomeMatch = texto.match(/Nome:\s*(.*?)(?=Telefone:|$)/i);
-        const protocoloMatch = texto.match(/Número de protocolo:\s*(\d+)/i);
+        const protocoloMatch = texto.match(/N.mero de protocolo:\s*(\d+)/i); // Aceita "Número" ou "N?mero"
         const telMatch = texto.match(/Telefone:\s*(\d+)/i);
         const cpfMatch = texto.match(/(?:cpf|cnpj)\s*Cliente:\s*([\d.-]+)|CPF:\s*([\d.-]+)/i);
 
