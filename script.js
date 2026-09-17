@@ -1243,39 +1243,48 @@ async function transferirLGPD(tipo) {
 
         let dadosNovosInseridos = false;
 
-        // --- EXTRAÇÃO DE E-MAIL ---
-        // Procura por padrões de e-mail na string copiada (ex: algo@dominio.com.br)
-        const emailMatch = texto.match(/[\w.-]+@[\w.-]+\.\w+/);
-        if (emailMatch) {
-            const emailEl = document.getElementById('lgpd-email');
-            if (emailEl) {
-                emailEl.value = emailMatch[0];
-                dadosNovosInseridos = true;
+        // Identifica qual aba foi copiada com base nos textos exclusivos de cada uma
+        const ehAbaTelefone = texto.includes("Fone Principal") || texto.includes("Fone Alternativo") || texto.includes("WhatsApp");
+        const ehAbaEmail = texto.includes("Email externo");
+
+        // --- SE FOR A ABA DE TELEFONE ---
+        if (ehAbaTelefone) {
+            const diretos = texto.match(/\b(\d{2})(\d{8,9})\b/g) || [];
+            if (diretos.length > 0) {
+                const telefonesEncontrados = [...new Set(diretos)];
+                
+                for (let i = 0; i < 4 && i < telefonesEncontrados.length; i++) {
+                    const campo = document.getElementById(`lgpd-tel${i + 1}`);
+                    // Preenche apenas se o campo estiver vazio, preservando o e-mail ou outros telefones já preenchidos
+                    if (campo && !campo.value) {
+                        campo.value = telefonesEncontrados[i];
+                        dadosNovosInseridos = true;
+                    }
+                }
             }
         }
 
-        // --- EXTRAÇÃO DE TELEFONES ---
-        // Procura por sequências numéricas que correspondam a telefones com DDD (8 ou 9 dígitos)
-        const diretos = texto.match(/\b(\d{2})(\d{8,9})\b/g) || [];
-        if (diretos.length > 0) {
-            const telefonesEncontrados = [...new Set(diretos)];
-            
-            // Varre os 4 campos de telefone disponíveis na tela
-            for (let i = 0; i < 4 && i < telefonesEncontrados.length; i++) {
-                const campo = document.getElementById(`lgpd-tel${i + 1}`);
-                // Preenche apenas se o campo estiver vazio, preservando o que já foi colado da outra aba
-                if (campo && !campo.value) {
-                    campo.value = telefonesEncontrados[i];
+        // --- SE FOR A ABA DE E-MAIL ---
+        if (ehAbaEmail) {
+            // Procura e-mails no texto, mas ignorando o e-mail técnico padrão do plano (*@desktop.com.br)
+            const matches = texto.match(/[\w.-]+@[\w.-]+\.\w+/g) || [];
+            const emailCliente = matches.find(e => !e.endsWith('@desktop.com.br'));
+
+            if (emailCliente) {
+                const emailEl = document.getElementById('lgpd-email');
+                // Preenche apenas se o campo de e-mail estiver vazio, preservando os telefones já colados
+                if (emailEl && !emailEl.value) {
+                    emailEl.value = emailCliente;
                     dadosNovosInseridos = true;
                 }
             }
         }
 
         if (dadosNovosInseridos) {
-            showToast("Dados LGPD transferidos com sucesso!");
+            showToast("Dados transferidos e acumulados com sucesso!");
             tocarSomSucesso();
         } else {
-            showToast("Nenhum dado novo (telefone ou e-mail) foi identificado.", true);
+            showToast("Nenhum dado novo encontrado ou os campos já estão preenchidos.", true);
         }
 
     } catch (err) {
@@ -1317,6 +1326,7 @@ function copiarLGPD(tipo) {
         tocarSomSucesso();
     });
 }
+//___________________________________//
 
 function salvarDadosTemporarios() {
     const dados = {
