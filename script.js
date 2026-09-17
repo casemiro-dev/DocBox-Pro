@@ -1236,30 +1236,48 @@ async function transferirLGPD(tipo) {
     try {
         const texto = await navigator.clipboard.readText();
         
-        // Identificação simplificada baseada no seu script.js original
-        const isDesk = texto.includes("Usuário:") && texto.includes("Cadastro Geral");
-        const isFaster = texto.includes("Confirme o telefone com o cliente:");
+        // Validação básica para garantir que é uma página de cliente válida do sistema
+        if (!texto.includes("Clientes → Editar") && !texto.includes("Número")) {
+            return alert("Os dados na área de transferência não parecem ser de um cliente válido.");
+        }
 
-        if (tipo === 'desk' && !isDesk) return alert("Os dados na área de transferência não parecem ser do tipo Desk.");
-        if (tipo === 'faster' && !isFaster) return alert("Os dados na área de transferência não parecem ser do tipo Faster.");
+        let dadosNovosInseridos = false;
 
-        limparLGPD();
-
-        // Extração de e-mail
+        // --- EXTRAÇÃO DE E-MAIL ---
+        // Procura por padrões de e-mail na string copiada (ex: algo@dominio.com.br)
         const emailMatch = texto.match(/[\w.-]+@[\w.-]+\.\w+/);
-        if (emailMatch) document.getElementById('lgpd-email').value = emailMatch[0];
+        if (emailMatch) {
+            const emailEl = document.getElementById('lgpd-email');
+            if (emailEl) {
+                emailEl.value = emailMatch[0];
+                dadosNovosInseridos = true;
+            }
+        }
 
-        // Extração de telefones (Lógica simplificada do seu script)
+        // --- EXTRAÇÃO DE TELEFONES ---
+        // Procura por sequências numéricas que correspondam a telefones com DDD (8 ou 9 dígitos)
         const diretos = texto.match(/\b(\d{2})(\d{8,9})\b/g) || [];
-        const telefones = [...new Set(diretos)].slice(0, 4);
+        if (diretos.length > 0) {
+            const telefonesEncontrados = [...new Set(diretos)];
+            
+            // Varre os 4 campos de telefone disponíveis na tela
+            for (let i = 0; i < 4 && i < telefonesEncontrados.length; i++) {
+                const campo = document.getElementById(`lgpd-tel${i + 1}`);
+                // Preenche apenas se o campo estiver vazio, preservando o que já foi colado da outra aba
+                if (campo && !campo.value) {
+                    campo.value = telefonesEncontrados[i];
+                    dadosNovosInseridos = true;
+                }
+            }
+        }
 
-        telefones.forEach((num, i) => {
-            const campo = document.getElementById(`lgpd-tel${i + 1}`);
-            if (campo) campo.value = num;
-        });
+        if (dadosNovosInseridos) {
+            showToast("Dados LGPD transferidos com sucesso!");
+            tocarSomSucesso();
+        } else {
+            showToast("Nenhum dado novo (telefone ou e-mail) foi identificado.", true);
+        }
 
-        showToast("Dados LGPD transferidos!");
-        tocarSomSucesso();
     } catch (err) {
         showToast("Erro ao ler área de transferência", true);
     }
@@ -1268,16 +1286,20 @@ async function transferirLGPD(tipo) {
 function copiarLGPD(tipo) {
     const telefones = [];
     for (let i = 1; i <= 4; i++) {
-        const valor = document.getElementById(`lgpd-tel${i}`).value.trim();
-        if (valor.length >= 10) {
-            const ddd = valor.slice(0, 2);
-            const numero = valor.slice(2);
-            const ultimos4 = numero.slice(-4);
-            telefones.push(`(${ddd}) X XXXX-${ultimos4}`);
+        const el = document.getElementById(`lgpd-tel${i}`);
+        if (el) {
+            const valor = el.value.trim();
+            if (valor.length >= 10) {
+                const ddd = valor.slice(0, 2);
+                const numero = valor.slice(2);
+                const ultimos4 = numero.slice(-4);
+                telefones.push(`(${ddd}) X XXXX-${ultimos4}`);
+            }
         }
     }
 
-    const email = document.getElementById('lgpd-email').value.trim();
+    const emailEl = document.getElementById('lgpd-email');
+    const email = emailEl ? emailEl.value.trim() : '';
     const telFormatados = telefones.join(", ");
     
     let mensagem = `No seu cadastro constam as seguintes informações para contato: ${telFormatados}`;
