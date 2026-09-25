@@ -85,9 +85,6 @@
         <button onclick="showScreen('lgpd-screen')" class="nav-item">
             <i data-lucide="shield-check"></i> <span>LGPD</span>
         </button>
-        <button onclick="showScreen('timer-screen')" class="nav-item">
-            <i data-lucide="alarm-clock"></i> <span>Despertador</span>
-        </button>
     </div>
 
     <div class="nav-section">
@@ -140,11 +137,6 @@
                 <i data-lucide="external-link"></i>
             </button>    
 
-            <div id="header-clock" class="header-clock" onclick="showScreen('timer-screen')" title="Ir para o Despertador">
-                <span id="header-clock-time" class="header-clock-time">--:--:--</span>
-                <span id="header-clock-next" class="header-clock-next">Sem despertadores</span>
-            </div>
-
             <button onclick="toggleTheme()" class="btn-icon" id="theme-btn">
                 <i data-lucide="sun"></i>
             </button>
@@ -188,25 +180,7 @@
                             </div>
                         </div>
 
-                        <div class="editor-toolbar">
-                            <button type="button" class="editor-btn" title="Negrito" onclick="formatarTexto('bold')" onmousedown="event.preventDefault()">
-                                <i data-lucide="bold"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Itálico" onclick="formatarTexto('italic')" onmousedown="event.preventDefault()">
-                                <i data-lucide="italic"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Sublinhado" onclick="formatarTexto('underline')" onmousedown="event.preventDefault()">
-                                <i data-lucide="underline"></i>
-                            </button>
-                            <button type="button" class="editor-btn" title="Tachado" onclick="formatarTexto('strikeThrough')" onmousedown="event.preventDefault()">
-                                <i data-lucide="strikethrough"></i>
-                            </button>
-                            <span class="editor-toolbar-divider"></span>
-                            <button type="button" class="editor-btn editor-btn-line" title="Inserir linha separadora no local do cursor" onclick="inserirLinhaSeparadora()" onmousedown="event.preventDefault()">
-                                <i data-lucide="minus"></i> Inserir Linha
-                            </button>
-                        </div>
-                        <div id="at-relato" class="editor-relato" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Relato do atendimento... (digite #, %, $, . para atalhos)"></div>
+                        <textarea id="at-relato" placeholder="Relato do atendimento... (digite #, %, $, . para atalhos)"></textarea>
                         <div id="shortcut-dropdown" class="shortcut-dropdown hidden"></div>
                         
                         <div class="button-grid-atendimento">
@@ -229,32 +203,6 @@
                 </div>
             </div>
         </main>
-    </section>
-
-    <section id="timer-screen" class="screen hidden">
-        <div class="admin-container">
-            <header class="admin-header">
-                <button onclick="showScreen('main-screen')" class="btn-back">
-                    <i data-lucide="chevron-left"></i> Voltar
-                </button>
-                <h2>Despertador de Pausas</h2>
-            </header>
-
-            <div class="form-card" style="margin-bottom: 25px; max-width: 640px;">
-                <h3>Novo Despertador</h3>
-                <p class="timer-hint">Escolha a hora exata em que o despertador deve tocar. Você pode manter vários despertadores ativos ao mesmo tempo — se o horário escolhido já passou hoje, ele tocará amanhã.</p>
-                <div class="timer-add-row">
-                    <input type="time" id="alarm-time">
-                    <input type="text" id="alarm-label" placeholder="Nome (ex: Pausa café)">
-                    <button class="btn-primary" onclick="adicionarAlarme()">Adicionar</button>
-                </div>
-            </div>
-
-            <div class="form-card" style="max-width: 640px;">
-                <h3>Despertadores Ativos</h3>
-                <div id="alarm-list" class="timer-list"></div>
-            </div>
-        </div>
     </section>
 
     <section id="history-screen" class="screen hidden">
@@ -382,16 +330,6 @@
                     </div>
                 </div>
 
-                <div class="form-card" style="margin-bottom: 30px;">
-                    <h3>Cor do Cabeçalho</h3>
-                    <p class="subtitle" style="font-size: 13px; opacity: 0.7; margin-bottom: 15px; text-align: left;">Personalize a cor do cabeçalho da aplicação</p>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="color" id="header-color" value="#161b22" style="width: 60px; height: 42px; padding: 3px; margin-bottom: 0; flex-shrink: 0; cursor: pointer;">
-                        <button class="btn-primary" style="flex: 1; margin-bottom: 0;" onclick="aplicarCorHeader()">Aplicar</button>
-                        <button class="btn-danger" style="flex: 1; margin-bottom: 0;" onclick="removerCorHeader()">Remover</button>
-                    </div>
-                </div>
-
                 <h3 style="margin-bottom: 15px; color: var(--text-bold);">Lista de Exclusão</h3>
                 <div id="admin-list" class="admin-list"></div>
             </div> </div> </div>
@@ -497,18 +435,6 @@
         </div>
     </div>
 </section>
-
-<!-- ============================================================
-     ALERTA VISUAL DE FIM DE PAUSA
-     ============================================================ -->
-<div id="timer-alert" class="timer-alert hidden">
-    <div class="timer-alert-card">
-        <div class="timer-alert-icon"><i data-lucide="bell-ring"></i></div>
-        <h2>Hora da Pausa!</h2>
-        <p id="timer-alert-msg">Seu despertador tocou. Levante, alongue-se e descanse os olhos.</p>
-        <button class="btn-primary" onclick="dismissAlarme()">Fiz minha pausa ✓</button>
-    </div>
-</div>
 
 <div id="toast">Copiado!</div>
 
