@@ -450,7 +450,7 @@ nav {
 /* ==========================================================================
    FORMULÁRIOS, INPUTS E TEXTAREA
    ========================================================================== */
-input, textarea, select, .editor-relato { 
+input, textarea, select { 
     width: 100%; 
     padding: 12px; 
     margin-bottom: 12px; 
@@ -462,7 +462,12 @@ input, textarea, select, .editor-relato {
     transition: background 0.3s, border-color 0.2s;
 }
 
-input:focus, textarea:focus, select:focus, .editor-relato:focus {
+textarea#at-relato {
+    resize: vertical; 
+    min-height: 250px;
+}
+
+input:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--accent);
     background: var(--card);
@@ -513,7 +518,7 @@ input:focus, textarea:focus, select:focus, .editor-relato:focus {
     display: flex; 
     align-items: center; 
     justify-content: space-between; 
-    background: var(--header-bg, var(--sidebar)) !important; 
+    background: var(--sidebar) !important; 
     border-bottom: 1px solid var(--border); 
     flex-shrink: 0;
     backdrop-filter: blur(5px);
@@ -1262,268 +1267,4 @@ input:focus, textarea:focus, select:focus, .editor-relato:focus {
 
 .btn-toggle-password.active {
     animation: eyeBlink 0.3s ease-in-out !important;
-}
-
-/* ==========================================================================
-   EDITOR RICH TEXT (WYSIWYG)
-   ========================================================================== */
-.editor-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
-    padding: 6px 8px;
-}
-
-.editor-btn {
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text);
-    cursor: pointer;
-    padding: 6px 9px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    transition: 0.2s;
-}
-.editor-btn i { width: 16px; height: 16px; }
-.editor-btn:hover { background: var(--border); color: var(--text-bold); }
-.editor-toolbar-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-.editor-btn-line { color: var(--accent); }
-
-.editor-relato {
-    width: 100%;
-    min-height: 250px;
-    max-height: 500px;
-    overflow-y: auto;
-    padding: 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 0 0 8px 8px;
-    color: var(--text-bold);
-    font-size: 14px;
-    line-height: 1.6;
-    outline: none;
-    margin-bottom: 12px;
-    transition: background 0.3s, border-color 0.2s;
-    word-wrap: break-word;
-}
-.editor-relato:focus { border-color: var(--accent); background: var(--card); }
-.editor-relato:empty::before {
-    content: attr(data-placeholder);
-    color: var(--text);
-    opacity: 0.55;
-    pointer-events: none;
-}
-.editor-relato hr {
-    border: none;
-    border-top: 2px solid var(--border);
-    margin: 14px 0;
-}
-.editor-relato b, .editor-relato strong { font-weight: 700; }
-.editor-relato u { text-decoration: underline; }
-
-/* ==========================================================================
-   DESPERTADOR DE PAUSAS (RELOGIO NO CABEÇALHO + TELA)
-   ========================================================================== */
-.header-clock {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
-    cursor: pointer;
-    padding: 4px 10px;
-    border-radius: 8px;
-    border: 1px solid transparent;
-    transition: 0.2s;
-    line-height: 1.2;
-}
-.header-clock:hover {
-    background: var(--border);
-}
-
-.header-clock-time {
-    font-family: monospace;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-bold);
-    letter-spacing: 1px;
-}
-
-.header-clock-next {
-    font-size: 10px;
-    color: var(--text);
-    opacity: 0.8;
-    max-width: 190px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.header-clock.alarm-soon {
-    border-color: rgba(248, 81, 73, 0.5);
-}
-.header-clock.alarm-soon .header-clock-time,
-.header-clock.alarm-soon .header-clock-next {
-    color: #f85149;
-    animation: blinkSoon 1s step-start infinite;
-}
-
-@keyframes blinkSoon {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.45; }
-}
-
-.timer-hint { font-size: 12px; opacity: 0.7; margin-bottom: 15px; line-height: 1.5; }
-
-.timer-add-row { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-.timer-add-row input { flex: 1; margin-bottom: 0; min-width: 130px; }
-.timer-add-row .btn-primary { flex-shrink: 0; width: auto; padding: 10px 16px; margin-bottom: 0; }
-
-.timer-list { display: flex; flex-direction: column; gap: 10px; }
-
-.timer-empty {
-    text-align: center;
-    opacity: 0.5;
-    padding: 20px 0;
-    font-size: 13px;
-}
-
-.timer-item {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    background: var(--bg);
-}
-.timer-item.done { border-color: #f85149; }
-
-.timer-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.timer-label {
-    font-weight: 600;
-    color: var(--text-bold);
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.timer-seq {
-    font-size: 10px;
-    background: rgba(56, 139, 253, 0.15);
-    color: var(--accent);
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 700;
-}
-
-.timer-time {
-    font-family: monospace;
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--accent);
-}
-
-.timer-progress {
-    height: 6px;
-    background: var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 10px;
-}
-
-.timer-progress-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 6px;
-    transition: width 1s linear;
-}
-
-.timer-actions { display: flex; gap: 8px; justify-content: flex-end; }
-
-.timer-btn {
-    padding: 6px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0;
-}
-.timer-btn i { width: 16px; height: 16px; }
-
-/* ==========================================================================
-   ALERTA VISUAL DE FIM DE PAUSA
-   ========================================================================== */
-.timer-alert {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    animation: pulseAlert 1.2s ease-in-out infinite;
-}
-
-.timer-alert-card {
-    background: var(--card);
-    border: 2px solid #f85149;
-    border-radius: 20px;
-    padding: 40px 45px;
-    text-align: center;
-    max-width: 420px;
-    width: 100%;
-    box-shadow: 0 0 60px rgba(248, 81, 73, 0.45);
-}
-
-.timer-alert-icon {
-    color: #f85149;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-.timer-alert-icon i {
-    width: 64px;
-    height: 64px;
-    animation: shakeBell 0.6s ease-in-out infinite;
-}
-
-.timer-alert-card h2 {
-    color: #f85149;
-    font-size: 26px;
-    margin-bottom: 10px;
-}
-
-.timer-alert-card p {
-    color: var(--text-bold);
-    font-size: 14px;
-    margin-bottom: 25px;
-    line-height: 1.5;
-}
-
-.timer-alert-card .btn-primary { background: #f85149; width: 100%; }
-
-@keyframes pulseAlert {
-    0%, 100% { background: rgba(13, 17, 23, 0.85); }
-    50% { background: rgba(248, 81, 73, 0.25); }
-}
-
-@keyframes shakeBell {
-    0%, 100% { transform: rotate(0); }
-    25% { transform: rotate(-15deg); }
-    75% { transform: rotate(15deg); }
 }
