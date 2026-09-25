@@ -66,15 +66,10 @@ function showScreen(screenId) {
         target.style.display = 'flex';
     }
     
-    if (['main-screen', 'admin-screen', 'lgpd-screen', 'history-screen', 'timer-screen'].includes(screenId)) {
+    if (['main-screen', 'admin-screen', 'lgpd-screen', 'history-screen'].includes(screenId)) {
         localStorage.setItem('docbox_last_screen', screenId);
     }
     
-    // Destaca o item ativo no menu lateral
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const navAtivo = document.querySelector(`.nav-item[onclick*="showScreen('${screenId}')"]`);
-    if (navAtivo) navAtivo.classList.add('active');
-
     // SÓ CHAMA O BANCO SE TIVER CONEXÃO
     if ((screenId === 'main-screen' || screenId === 'admin-screen') && supabaseClient) {
         loadScripts();
@@ -85,11 +80,6 @@ function showScreen(screenId) {
     // ADICIONE ISSO AQUI:
     if (screenId === 'history-screen') {
         renderHistorico();
-    }
-
-    if (screenId === 'timer-screen') {
-        renderAlarmes();
-        garantirRelogio();
     }
 }
 
@@ -202,7 +192,7 @@ async function checkUser() {
             // --- CARREGAR WALLPAPER DO SUPABASE ---
             supabaseClient
                 .from('profiles')
-                .select('wallpaper_url, header_color')
+                .select('wallpaper_url')
                 .eq('id', user.id)
                 .single()
                 .then(({ data }) => {
@@ -212,16 +202,10 @@ async function checkUser() {
                         const bgInput = document.getElementById('bg-url');
                         if (bgInput) bgInput.value = data.wallpaper_url;
                     }
-                    if (data && data.header_color) {
-                        document.documentElement.style.setProperty('--header-bg', data.header_color);
-                        localStorage.setItem('docbox_header_color', data.header_color);
-                        const colorInput = document.getElementById('header-color');
-                        if (colorInput) colorInput.value = data.header_color;
-                    }
                 });
 
             let lastScreen = localStorage.getItem('docbox_last_screen');
-            const validScreens = ['main-screen', 'admin-screen', 'lgpd-screen', 'history-screen', 'timer-screen']; 
+            const validScreens = ['main-screen', 'admin-screen', 'lgpd-screen', 'history-screen']; 
             
             if (!lastScreen || !validScreens.includes(lastScreen)) {
                 lastScreen = 'main-screen';
@@ -405,9 +389,7 @@ async function saveAtendimento() {
     const protocolo = document.getElementById('at-protocolo').value.trim();
     const doc = document.getElementById('at-doc').value.trim();
     const tel = document.getElementById('at-tel').value.trim();
-    const relatoEditor = document.getElementById('at-relato');
-    const relato = relatoEditor ? relatoEditor.innerText.trim() : "";
-    const relatoHTML = relatoEditor ? relatoEditor.innerHTML : relato;
+    const relato = document.getElementById('at-relato').value.trim();
 
     // 2. Validação de campos vazios
     if (!nome || !protocolo || !doc || !tel || !relato) {
@@ -441,7 +423,7 @@ async function saveAtendimento() {
         protocolo: protocolo, 
         documento: doc, 
         telefone: tel, 
-        relato: relatoHTML
+        relato: relato
     }]);
 
     if (error) {
@@ -497,7 +479,7 @@ async function buscarAtendimentoSalvo() {
             // Preenche tudo na tela
             document.getElementById('at-nome').value = atendimento.nome || "";
             document.getElementById('at-tel').value = atendimento.telefone || "";
-            document.getElementById('at-relato').innerHTML = atendimento.relato || "";
+            document.getElementById('at-relato').value = atendimento.relato || "";
             protInput.value = atendimento.protocolo || "";
             docInput.value = atendimento.documento || "";
 
@@ -529,11 +511,7 @@ function limparCamposSemConfirmacao() {
     campos.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            if (el.id === 'at-relato') {
-                el.innerHTML = '';
-            } else {
-                el.value = '';
-            }
+            el.value = '';
             el.classList.remove('input-valid', 'input-invalid');
         }
     });
@@ -549,54 +527,6 @@ function limparCamposSemConfirmacao() {
     atualizarTituloPagina();
 }
 
-function escaparHTML(texto) {
-    return String(texto).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function relatoHTMLParaTexto(html) {
-    const container = document.createElement('div');
-    container.innerHTML = html;
-    let saida = '';
-
-    (function percorrer(node) {
-        node.childNodes.forEach(filho => {
-            if (filho.nodeType === Node.TEXT_NODE) { saida += filho.textContent; return; }
-            const tag = filho.nodeName.toUpperCase();
-            if (tag === 'BR') { saida += '\n'; return; }
-            if (tag === 'HR') { saida += '\n──────────────\n'; return; }
-            if (tag === 'DIV' || tag === 'P') {
-                percorrer(filho);
-                if (saida && !saida.endsWith('\n')) saida += '\n';
-                return;
-            }
-            if (tag === 'B' || tag === 'STRONG') { saida += '*' + filho.innerText + '*'; return; }
-            if (tag === 'I' || tag === 'EM') { saida += '_' + filho.innerText + '_'; return; }
-            if (tag === 'STRIKE' || tag === 'S' || tag === 'DEL') { saida += '~' + filho.innerText + '~'; return; }
-            if (tag === 'U') { saida += filho.innerText; return; }
-            percorrer(filho);
-        });
-    })(container);
-
-    return saida;
-}
-
-function copiarComFormatacao(textoPuro, textoHTML) {
-    const sucesso = () => { showToast("Dados copiados!"); tocarSomSucesso(); };
-
-    if (navigator.clipboard && window.ClipboardItem) {
-        navigator.clipboard.write([
-            new ClipboardItem({
-                'text/plain': new Blob([textoPuro], { type: 'text/plain' }),
-                'text/html': new Blob([textoHTML], { type: 'text/html' })
-            })
-        ]).then(sucesso).catch(() => {
-            navigator.clipboard.writeText(textoPuro).then(sucesso).catch(() => showToast("Erro ao copiar.", true));
-        });
-    } else {
-        navigator.clipboard.writeText(textoPuro).then(sucesso).catch(() => showToast("Erro ao copiar.", true));
-    }
-}
-
 function copiarRegistro() {
     const elNome = document.getElementById('at-nome');
     const elProt = document.getElementById('at-protocolo');
@@ -606,23 +536,15 @@ function copiarRegistro() {
     const nome = elNome?.value.trim() || "";
     const protocolo = elProt?.value.trim() || "";
     const telefone = elTel?.value.trim() || "";
-    const relatoHTML = elRelato?.innerHTML || "";
-    const relatoTexto = relatoHTMLParaTexto(relatoHTML).trim();
+    const relato = elRelato?.value.trim() || "";
 
-    if (!nome && !telefone && !protocolo && !relatoTexto) return showToast("Preencha ao menos um campo!", true);
+    if (!nome && !telefone && !protocolo) return showToast("Preencha ao menos um campo!", true);
 
-    // Versão texto puro (com marcadores de formatação compatíveis com WhatsApp)
     let msg = protocolo === ""
-        ? `Cliente ${nome} via tel no n° ${telefone}${relatoTexto ? '\n\n' + relatoTexto : ''}`
-        : `Protocolo do chat: ${protocolo}\nCliente ${nome} via chat no n° ${telefone}${relatoTexto ? '\n\n' + relatoTexto : ''}`;
+        ? `Cliente ${nome} via tel no n° ${telefone}${relato ? '\n\n' + relato : ''}`
+        : `Protocolo do chat: ${protocolo}\nCliente ${nome} via chat no n° ${telefone}${relato ? '\n\n' + relato : ''}`;
 
-    // Versão HTML (preserva negrito, itálico, sublinhado, tachado e as linhas separadoras)
-    const cabecalhoHTML = protocolo === ""
-        ? `<p>Cliente <b>${escaparHTML(nome)}</b> via tel no n° <b>${escaparHTML(telefone)}</b></p>`
-        : `<p>Protocolo do chat: <b>${escaparHTML(protocolo)}</b><br>Cliente <b>${escaparHTML(nome)}</b> via chat no n° <b>${escaparHTML(telefone)}</b></p>`;
-    const htmlCompleto = relatoHTML ? cabecalhoHTML + '<br>' + relatoHTML : cabecalhoHTML;
-
-    copiarComFormatacao(msg, htmlCompleto);
+    navigator.clipboard.writeText(msg).then(() => showToast("Dados copiados!"));
 }
 
 // --- LÓGICA DE SCRIPTS (CRUD COMPLETO) ---
@@ -891,17 +813,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bgInput) bgInput.value = savedBg;
     }
 
-    const savedHeaderColor = localStorage.getItem('docbox_header_color');
-    if (savedHeaderColor) {
-        document.documentElement.style.setProperty('--header-bg', savedHeaderColor);
-        const colorInput = document.getElementById('header-color');
-        if (colorInput) colorInput.value = savedHeaderColor;
-    }
-
-    // Restaura despertadores salvos e inicia o relógio em tempo real
-    restaurarAlarmes();
-    garantirRelogio();
-
     // 2. Verificação de Usuário e Sessão
     setTimeout(() => {
         if (!carregandoRecuperacao) {
@@ -978,17 +889,17 @@ let dropdownState = {
 };
 
 function iniciarMonitoramentoAtalhos() {
-    const editor = document.getElementById('at-relato');
-    if (!editor) return;
+    const textarea = document.getElementById('at-relato');
+    if (!textarea) return;
 
     let debounceDropdown;
 
-    editor.addEventListener('input', () => {
+    textarea.addEventListener('input', () => {
         clearTimeout(debounceDropdown);
-        debounceDropdown = setTimeout(() => detectarAtalho(editor), 100);
+        debounceDropdown = setTimeout(() => detectarAtalho(textarea), 100);
     });
 
-    editor.addEventListener('keydown', (e) => {
+    textarea.addEventListener('keydown', (e) => {
         if (!dropdownState.visible) return;
 
         const dropdown = document.getElementById('shortcut-dropdown');
@@ -1007,7 +918,7 @@ function iniciarMonitoramentoAtalhos() {
                 e.preventDefault();
                 const index = parseInt(items[dropdownState.selectedIndex].dataset.index);
                 const script = dropdownState.resultados[index];
-                if (script) inserirAtalhoDoDropdown(script, editor);
+                if (script) inserirAtalhoDoDropdown(script, textarea);
             }
         } else if (e.key === 'Escape') {
             e.preventDefault();
@@ -1015,24 +926,20 @@ function iniciarMonitoramentoAtalhos() {
         }
     });
 
-    editor.addEventListener('blur', () => {
+    textarea.addEventListener('blur', () => {
         setTimeout(esconderDropdown, 200);
     });
 }
 
-function detectarAtalho(editor) {
+function detectarAtalho(textarea) {
     if (allScripts.length === 0) {
         esconderDropdown();
         return;
     }
 
-    const infoCursor = obterTextoAteCursor(editor);
-    if (!infoCursor.range) {
-        esconderDropdown();
-        return;
-    }
-
-    const textoAteCursor = infoCursor.texto;
+    const pos = textarea.selectionStart;
+    const texto = textarea.value;
+    const textoAteCursor = texto.slice(0, pos);
 
     // Encontra o último caractere especial (não alfanumérico) no texto antes do cursor
     const matchEspecial = textoAteCursor.match(/[\W_](?=[\w_]*$)/);
@@ -1042,6 +949,7 @@ function detectarAtalho(editor) {
     }
 
     const prefixIndex = matchEspecial.index;
+    const prefixChar = textoAteCursor[prefixIndex];
 
     // Verifica se está no início de uma palavra
     if (prefixIndex > 0) {
@@ -1078,10 +986,10 @@ function detectarAtalho(editor) {
     dropdownState.inicioAtalho = prefixIndex;
     dropdownState.textoAteCursor = textoAteCursor;
 
-    mostrarSugestoes(resultados, editor, infoCursor.range);
+    mostrarSugestoes(resultados, textarea, pos);
 }
 
-function mostrarSugestoes(resultados, editor, rangeCursor) {
+function mostrarSugestoes(resultados, textarea, cursorPos) {
     const dropdown = document.getElementById('shortcut-dropdown');
     if (!dropdown) return;
 
@@ -1092,10 +1000,10 @@ function mostrarSugestoes(resultados, editor, rangeCursor) {
         </div>
     `).join('');
 
-    // Posiciona o dropdown logo abaixo do cursor (posição fixa na tela)
-    const rect = rangeCursor.getBoundingClientRect();
-    dropdown.style.left = rect.left + 'px';
-    dropdown.style.top = (rect.bottom + 8) + 'px';
+    // Posiciona o dropdown abaixo da linha do cursor
+    const pos = calcularPosicaoCursor(textarea);
+    dropdown.style.left = pos.left + 'px';
+    dropdown.style.top = (pos.top + 24) + 'px';
     dropdown.classList.remove('hidden');
 
     dropdownState.visible = true;
@@ -1106,94 +1014,34 @@ function mostrarSugestoes(resultados, editor, rangeCursor) {
             e.preventDefault();
             const index = parseInt(item.dataset.index);
             const script = resultados[index];
-            if (script) inserirAtalhoDoDropdown(script, editor);
+            if (script) inserirAtalhoDoDropdown(script, textarea);
         });
     });
 }
 
-function inserirAtalhoDoDropdown(script, editor) {
+function inserirAtalhoDoDropdown(script, textarea) {
+    const texto = textarea.value;
+    const pos = textarea.selectionStart;
+    const textoAteCursor = texto.slice(0, dropdownState.inicioAtalho);
+
+    // Pega o conteúdo do script e prepara para inserção
     const conteudo = script.content || '';
+    const atalho = script.shortcut || '#' + (script.function_name || '').toLowerCase().replace(/\s+/g, '');
 
-    // Calcula quantos caracteres apagar (do início do atalho até o cursor)
-    const infoCursor = obterTextoAteCursor(editor);
-    const totalAteCursor = infoCursor.texto.length;
-    const qtdApagar = totalAteCursor - dropdownState.inicioAtalho;
-    if (qtdApagar < 0) {
-        esconderDropdown();
-        return;
-    }
+    // Remove o atalho digitado e insere apenas o conteúdo
+    const depoisDoCursor = texto.slice(pos);
+    const novoTexto = textoAteCursor + conteudo + depoisDoCursor;
 
-    // Monta os nós do conteúdo inserido (com quebras de linha)
-    const nosInserir = [];
-    conteudo.split('\n').forEach((linha, i) => {
-        if (i > 0) nosInserir.push(document.createElement('br'));
-        if (linha) nosInserir.push(document.createTextNode(linha));
-    });
-
-    // Localiza a posição de início do atalho dentro do editor
-    const rangeInicio = posicionarRangePorOffset(editor, dropdownState.inicioAtalho);
-    const range = document.createRange();
-    range.setStart(rangeInicio.startContainer, rangeInicio.startOffset);
-
-    // Remove o atalho digitado
-    if (qtdApagar > 0) {
-        const rangeFim = posicionarRangePorOffset(editor, dropdownState.inicioAtalho + qtdApagar);
-        range.setEnd(rangeFim.startContainer, rangeFim.startOffset);
-        range.deleteContents();
-    } else {
-        range.collapse(true);
-    }
-
-    // Insere o conteúdo
-    nosInserir.forEach(n => {
-        range.insertNode(n);
-        range.setStartAfter(n);
-    });
-    range.collapse(true);
+    textarea.value = novoTexto;
 
     // Posiciona o cursor no final do conteúdo inserido
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+    const novoCursor = textoAteCursor.length + conteudo.length;
+    textarea.selectionStart = textarea.selectionEnd = novoCursor;
 
     esconderDropdown();
-    editor.focus();
+    textarea.focus();
     salvarDadosTemporarios();
     lucide.createIcons();
-}
-
-// Obtém o texto (puro) do início do editor até o cursor, junto com o range atual
-function obterTextoAteCursor(editor) {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return { texto: '', range: null };
-    const range = sel.getRangeAt(0);
-    if (!editor.contains(range.startContainer)) return { texto: '', range: null };
-
-    const preRange = document.createRange();
-    preRange.selectNodeContents(editor);
-    preRange.setEnd(range.startContainer, range.startOffset);
-
-    return { texto: preRange.toString(), range };
-}
-
-// Posiciona um range colapsado em um offset de texto dentro do editor
-function posicionarRangePorOffset(editor, offset) {
-    const range = document.createRange();
-    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
-    let total = 0;
-    let node;
-    while ((node = walker.nextNode())) {
-        const tamanho = node.textContent.length;
-        if (total + tamanho >= offset) {
-            range.setStart(node, offset - total);
-            range.collapse(true);
-            return range;
-        }
-        total += tamanho;
-    }
-    range.selectNodeContents(editor);
-    range.collapse(false);
-    return range;
 }
 
 function esconderDropdown() {
@@ -1212,76 +1060,57 @@ function atualizarItemAtivo(items) {
     items[dropdownState.selectedIndex]?.scrollIntoView({ block: 'nearest' });
 }
 
-// --- FIM DO DROPDOWN DE ATALHOS ---
+function calcularPosicaoCursor(textarea) {
+    // Cria um espelho para medir a posição do texto até o cursor
+    const pos = textarea.selectionStart;
+    const texto = textarea.value;
+    const textoAteCursor = texto.slice(0, pos);
 
-// --- EDITOR RICH TEXT (FORMATAÇÃO WYSIWYG) ---
-let selecaoSalvaEditor = null;
+    // Pega as últimas linhas para medir
+    const linhas = textoAteCursor.split('\n');
+    const linhaAtual = linhas.length;
 
-document.addEventListener('selectionchange', () => {
-    const editor = document.getElementById('at-relato');
-    if (!editor) return;
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return;
-    if (editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
-        selecaoSalvaEditor = sel.getRangeAt(0).cloneRange();
-    }
-});
+    // Mede usando um span temporário
+    const mirror = document.createElement('div');
+    const estilo = window.getComputedStyle(textarea);
+    mirror.style.cssText = `
+        position: fixed; top: -9999px; left: -9999px;
+        width: ${textarea.offsetWidth}px;
+        font-size: ${estilo.fontSize};
+        font-family: ${estilo.fontFamily};
+        line-height: ${estilo.lineHeight};
+        padding: ${estilo.padding};
+        letter-spacing: ${estilo.letterSpacing};
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        visibility: hidden;
+    `;
 
-function formatarTexto(comando) {
-    const editor = document.getElementById('at-relato');
-    if (!editor) return;
-
-    editor.focus();
-
-    // Restaura a seleção salva caso o clique no botão tenha tirado o foco do editor
-    const sel = window.getSelection();
-    if (selecaoSalvaEditor && (!sel || sel.rangeCount === 0 || !editor.contains(sel.anchorNode))) {
-        sel.removeAllRanges();
-        sel.addRange(selecaoSalvaEditor);
-    }
-
-    document.execCommand(comando, false, null);
-    salvarDadosTemporarios();
-    editor.focus();
-}
-
-function inserirLinhaSeparadora() {
-    const editor = document.getElementById('at-relato');
-    if (!editor) return;
-
-    editor.focus();
-
-    const sel = window.getSelection();
-    let range = null;
-
-    // Prioriza a seleção salva dentro do editor (posição do cursor)
-    if (selecaoSalvaEditor && editor.contains(selecaoSalvaEditor.startContainer)) {
-        range = selecaoSalvaEditor;
-    } else if (sel && sel.rangeCount > 0 && editor.contains(sel.getRangeAt(0).startContainer)) {
-        range = sel.getRangeAt(0);
+    // Texto até a última linha (pra medir altura)
+    if (linhaAtual > 1) {
+        mirror.textContent = textoAteCursor.split('\n').slice(0, -1).join('\n') + '\n';
     } else {
-        // Fallback: final do editor
-        range = document.createRange();
-        range.selectNodeContents(editor);
-        range.collapse(false);
+        mirror.textContent = '';
     }
 
-    // Colapsa a seleção para inserir exatamente no ponto do cursor
-    if (!range.collapsed) range.collapse(true);
+    // Um span na última linha pra medir a largura
+    const span = document.createElement('span');
+    span.textContent = linhas[linhaAtual - 1] || '';
+    mirror.appendChild(span);
+    document.body.appendChild(mirror);
 
-    const hr = document.createElement('hr');
-    range.insertNode(hr);
+    const rect = textarea.getBoundingClientRect();
+    const spanRect = span.getBoundingClientRect();
+    const scrollTop = textarea.scrollTop;
 
-    // Posiciona o cursor logo após a linha inserida
-    range.setStartAfter(hr);
-    range.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    const left = rect.left + spanRect.width + parseInt(estilo.paddingLeft) + 2;
+    const top = rect.top + spanRect.top - mirror.getBoundingClientRect().top + parseInt(estilo.paddingTop) - scrollTop + 4;
 
-    editor.focus();
-    salvarDadosTemporarios();
-    showToast("Linha separadora inserida!");
+    document.body.removeChild(mirror);
+
+    return { left, top };
 }
+// --- FIM DO DROPDOWN DE ATALHOS ---
 
 function solicitarRecuperacao() {
     const email = document.getElementById('email').value;
@@ -1505,7 +1334,7 @@ function salvarDadosTemporarios() {
         protocolo: document.getElementById('at-protocolo')?.value,
         doc: document.getElementById('at-doc')?.value,
         tel: document.getElementById('at-tel')?.value,
-        relato: document.getElementById('at-relato')?.innerHTML,
+        relato: document.getElementById('at-relato')?.value,
         tabId: TAB_ID // Guardamos o ID da aba no objeto
     };
     
@@ -1522,7 +1351,7 @@ function restaurarDadosTemporarios() {
         if (d.protocolo) document.getElementById('at-protocolo').value = d.protocolo;
         if (d.doc) document.getElementById('at-doc').value = d.doc;
         if (d.tel) document.getElementById('at-tel').value = d.tel;
-        if (d.relato) document.getElementById('at-relato').innerHTML = d.relato;
+        if (d.relato) document.getElementById('at-relato').value = d.relato;
         if (d.nome) atualizarTituloPagina();
     }
 }
@@ -1550,7 +1379,7 @@ window.addEventListener('load', () => {
         document.getElementById('at-protocolo').value = '';
         document.getElementById('at-doc').value = '';
         document.getElementById('at-tel').value = '';
-        document.getElementById('at-relato').innerHTML = '';
+        document.getElementById('at-relato').value = '';
         
         // Remove qualquer rascunho salvo no navegador (localStorage)
         localStorage.removeItem('atendimento_rascunho'); 
@@ -1711,321 +1540,6 @@ function atualizarRegra(id, valido) {
     }
 }
 
-// --- PERSONALIZAÇÃO DA COR DO CABEÇALHO ---
-function aplicarCorHeader() {
-    const input = document.getElementById('header-color');
-    if (!input) return;
-    const cor = input.value;
-
-    document.documentElement.style.setProperty('--header-bg', cor);
-    localStorage.setItem('docbox_header_color', cor);
-
-    if (currentUser && supabaseClient) {
-        supabaseClient
-            .from('profiles')
-            .upsert({ id: currentUser.id, header_color: cor, updated_at: new Date() })
-            .then(() => {});
-    }
-    showToast("Cor do cabeçalho aplicada!");
-}
-
-function removerCorHeader() {
-    document.documentElement.style.removeProperty('--header-bg');
-    localStorage.removeItem('docbox_header_color');
-
-    if (currentUser && supabaseClient) {
-        supabaseClient
-            .from('profiles')
-            .upsert({ id: currentUser.id, header_color: null, updated_at: new Date() })
-            .then(() => {});
-    }
-    showToast("Cor do cabeçalho removida!");
-}
-
-// --- DESPERTADOR DE PAUSAS (HORA EXATA) ---
-let alarmes = [];
-let relogioInterval = null;
-let alarmeSomInterval = null;
-let alarmeAtivo = false;
-let alarmeAtual = null;
-let filaAlarmes = [];
-
-function adicionarAlarme() {
-    const timeInput = document.getElementById('alarm-time');
-    const labelInput = document.getElementById('alarm-label');
-    if (!timeInput) return;
-
-    const valor = timeInput.value.trim();
-    if (!valor) return showToast("Escolha a hora do despertador!", true);
-
-    const [horaStr, minStr] = valor.split(':');
-    const horas = parseInt(horaStr, 10);
-    const minutos = parseInt(minStr, 10);
-    if (isNaN(horas) || isNaN(minutos)) return showToast("Hora inválida!", true);
-
-    const label = (labelInput?.value.trim() || "") || ("Pausa " + (alarmes.length + 1));
-
-    // Calcula o próximo horário de disparo (se já passou hoje, dispara amanhã)
-    const agora = new Date();
-    const alvo = new Date(agora);
-    alvo.setHours(horas, minutos, 0, 0);
-    const isTomorrow = alvo <= agora;
-    if (isTomorrow) alvo.setDate(alvo.getDate() + 1);
-
-    const alarme = {
-        id: Date.now() + Math.random(),
-        label: label,
-        horas: horas,
-        minutos: minutos,
-        endAt: alvo.getTime(),
-        status: 'pending',
-        isTomorrow: isTomorrow
-    };
-
-    alarmes.push(alarme);
-    timeInput.value = '';
-    if (labelInput) labelInput.value = '';
-
-    garantirRelogio();
-    renderAlarmes();
-    salvarAlarmes();
-
-    showToast(isTomorrow
-        ? `Despertador criado para amanhã às ${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}!`
-        : `Despertador criado para hoje às ${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}!`);
-}
-
-function removerAlarme(id) {
-    alarmes = alarmes.filter(a => a.id !== id);
-    renderAlarmes();
-    salvarAlarmes();
-    atualizarRelogioHeader();
-}
-
-function garantirRelogio() {
-    if (relogioInterval) return;
-    relogioInterval = setInterval(() => {
-        atualizarRelogioHeader();
-        verificarAlarmes();
-    }, 1000);
-    atualizarRelogioHeader();
-    verificarAlarmes();
-}
-
-// Relógio em tempo real no cabeçalho + contagem para a próxima pausa
-function atualizarRelogioHeader() {
-    const clockEl = document.getElementById('header-clock');
-    const timeEl = document.getElementById('header-clock-time');
-    const nextEl = document.getElementById('header-clock-next');
-    if (!clockEl || !timeEl || !nextEl) return;
-
-    const agora = new Date();
-    timeEl.textContent = agora.toLocaleTimeString('pt-BR');
-
-    const proximo = alarmes
-        .filter(a => a.status === 'pending' || a.status === 'done')
-        .sort((a, b) => a.endAt - b.endAt)[0];
-
-    if (proximo) {
-        if (proximo.status === 'done') {
-            nextEl.textContent = `⏰ ${proximo.label} tocou!`;
-            clockEl.classList.add('alarm-soon');
-            return;
-        }
-        const restante = Math.max(0, proximo.endAt - agora.getTime());
-        const horaAlvo = `${String(proximo.horas).padStart(2, '0')}:${String(proximo.minutos).padStart(2, '0')}`;
-        nextEl.textContent = `${proximo.label} às ${horaAlvo} · em ${formatarDuracao(restante)}`;
-        clockEl.classList.toggle('alarm-soon', restante <= 5 * 60 * 1000);
-    } else {
-        nextEl.textContent = 'Sem despertadores';
-        clockEl.classList.remove('alarm-soon');
-    }
-}
-
-function formatarDuracao(ms) {
-    const total = Math.max(0, Math.floor(ms / 1000));
-    const h = Math.floor(total / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-function verificarAlarmes() {
-    const agora = Date.now();
-    let mudou = false;
-
-    alarmes.forEach(a => {
-        if (a.status !== 'pending') return;
-        if (a.endAt <= agora) {
-            a.status = 'done';
-            mudou = true;
-            filaAlarmes.push(a);
-        }
-    });
-
-    if (mudou) {
-        renderAlarmes();
-        salvarAlarmes();
-    }
-
-    processarFilaAlarmes();
-}
-
-function renderAlarmes() {
-    const list = document.getElementById('alarm-list');
-    if (!list) return;
-
-    if (alarmes.length === 0) {
-        list.innerHTML = '<p class="timer-empty">Nenhum despertador ativo. Escolha um horário acima para criar o primeiro.</p>';
-    } else {
-        const ordenados = [...alarmes].sort((a, b) => a.endAt - b.endAt);
-        list.innerHTML = ordenados.map(a => {
-            const pendente = a.status === 'pending';
-            const restante = pendente ? Math.max(0, a.endAt - Date.now()) : 0;
-            const horaAlvo = `${String(a.horas).padStart(2, '0')}:${String(a.minutos).padStart(2, '0')}`;
-            return `
-            <div class="timer-item ${!pendente ? 'done' : ''}">
-                <div class="timer-info">
-                    <span class="timer-label">
-                        <span class="timer-seq">${horaAlvo}${pendente && a.isTomorrow ? ' · amanhã' : ''}</span>
-                        ${a.label}
-                        ${!pendente ? '<span class="timer-seq" style="background: rgba(248,81,73,0.15); color: #f85149;">Tocou</span>' : ''}
-                    </span>
-                    <span class="timer-time">${pendente ? 'em ' + formatarDuracao(restante) : '00:00'}</span>
-                </div>
-                <div class="timer-actions">
-                    <button class="btn-danger timer-btn" onclick="removerAlarme(${a.id})" title="Remover"><i data-lucide="trash-2"></i></button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
-    lucide.createIcons();
-    atualizarRelogioHeader();
-}
-
-function processarFilaAlarmes() {
-    if (alarmeAtivo || filaAlarmes.length === 0) return;
-    const alarme = filaAlarmes.shift();
-    alarmeAtual = alarme;
-    alarmeAtivo = true;
-    mostrarAlarme(alarme);
-    iniciarSomAlarme();
-}
-
-function mostrarAlarme(alarme) {
-    const alertEl = document.getElementById('timer-alert');
-    const msg = document.getElementById('timer-alert-msg');
-    if (msg) {
-        const horaAlvo = alarme
-            ? `${String(alarme.horas).padStart(2, '0')}:${String(alarme.minutos).padStart(2, '0')}`
-            : '';
-        msg.innerText = alarme && alarme.label
-            ? `O despertador "${alarme.label}" (${horaAlvo}) tocou. Levante, alongue-se e descanse os olhos!`
-            : 'Hora da pausa! Levante, alongue-se e descanse os olhos.';
-    }
-    if (alertEl) alertEl.classList.remove('hidden');
-}
-
-function esconderAlarme() {
-    const alertEl = document.getElementById('timer-alert');
-    if (alertEl) alertEl.classList.add('hidden');
-}
-
-function dismissAlarme() {
-    alarmeAtivo = false;
-    pararSomAlarme();
-    esconderAlarme();
-
-    if (alarmeAtual) {
-        alarmes = alarmes.filter(a => a.id !== alarmeAtual.id);
-        showToast("Despertador removido!");
-        alarmeAtual = null;
-    }
-
-    renderAlarmes();
-    salvarAlarmes();
-    processarFilaAlarmes();
-}
-
-function iniciarSomAlarme() {
-    try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        const tocar = () => {
-            [0, 0.35, 0.7].forEach(atraso => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'square';
-                osc.frequency.value = 880;
-                gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + atraso);
-                gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + atraso + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + atraso + 0.3);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + atraso);
-                osc.stop(audioCtx.currentTime + atraso + 0.35);
-            });
-        };
-
-        tocar();
-        alarmeSomInterval = setInterval(tocar, 1800);
-    } catch (e) {
-        console.warn("Som de alarme indisponível.");
-    }
-}
-
-function pararSomAlarme() {
-    if (alarmeSomInterval) {
-        clearInterval(alarmeSomInterval);
-        alarmeSomInterval = null;
-    }
-}
-
-function salvarAlarmes() {
-    const dados = alarmes.map(a => ({
-        id: a.id,
-        label: a.label,
-        horas: a.horas,
-        minutos: a.minutos,
-        endAt: a.endAt,
-        status: a.status,
-        isTomorrow: a.isTomorrow
-    }));
-    localStorage.setItem('docbox_alarmes', JSON.stringify(dados));
-}
-
-function restaurarAlarmes() {
-    try {
-        const salvo = localStorage.getItem('docbox_alarmes');
-        if (!salvo) return;
-        const dados = JSON.parse(salvo);
-
-        alarmes = dados.map(d => {
-            // Se o horário já passou enquanto o app estava fechado, dispara ao abrir
-            if (d.endAt <= Date.now()) {
-                return { ...d, endAt: Date.now(), status: 'pending', isTomorrow: false };
-            }
-            return d;
-        });
-
-        renderAlarmes();
-        garantirRelogio();
-    } catch (e) {
-        console.warn("Erro ao restaurar despertadores:", e);
-    }
-}
-
-// Garante que o relógio e os despertadores estejam corretos ao voltar para a aba
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        atualizarRelogioHeader();
-        verificarAlarmes();
-    }
-});
-
 // EXPOSIÇÃO GLOBAL COMPLETA
 window.handleLogin = handleLogin;
 window.handleSignUp = handleSignUp;
@@ -2062,15 +1576,6 @@ window.solicitarRecuperacao = solicitarRecuperacao;
 window.atualizarSenha = atualizarSenha;
 window.validarSenhaSignup = validarSenhaSignup;
 window.validarConfirmacaoSignup = validarConfirmacaoSignup;
-
-// Novas funções: editor rich text, despertador e cor do cabeçalho
-window.formatarTexto = formatarTexto;
-window.inserirLinhaSeparadora = inserirLinhaSeparadora;
-window.adicionarAlarme = adicionarAlarme;
-window.removerAlarme = removerAlarme;
-window.dismissAlarme = dismissAlarme;
-window.aplicarCorHeader = aplicarCorHeader;
-window.removerCorHeader = removerCorHeader;
 
 // --- FUNÇÃO PARA RENDERIZAR O HISTÓRICO LOCAL ---
 window.renderHistorico = function() {
